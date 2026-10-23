@@ -57,7 +57,6 @@ export struct AboutPage {
     SettingsRow({
       icon: icon,
       title: title,
-      subtitle: url === '' ? '待补充（开源仓库上线后填写）' : url,
       trailingText: url === '' ? '待补充' : '打开链接',
       showArrow: false,
       onTap: () => {
@@ -132,7 +131,6 @@ export struct AboutPage {
       SettingsRow({
         icon: $r('sys.symbol.heart'),
         title: '致谢',
-        subtitle: '上游项目、平台能力与开发者',
         onTap: () => {
           this.pageStack.pushPathByName(ROUTE_ACKNOWLEDGEMENTS, null);
         }
@@ -141,7 +139,6 @@ export struct AboutPage {
       SettingsRow({
         icon: $r('sys.symbol.doc_text'),
         title: '开源许可证',
-        subtitle: '本应用以 Apache License 2.0 发布',
         trailingText: 'Apache-2.0',
         showArrow: false,
         onTap: () => {
@@ -151,7 +148,6 @@ export struct AboutPage {
       SettingsRow({
         icon: $r('sys.symbol.book_pages'),
         title: '第三方许可证',
-        subtitle: '查看使用的开源项目与系统能力',
         onTap: () => {
           this.pageStack.pushPathByName(ROUTE_LICENSES, null);
         }
