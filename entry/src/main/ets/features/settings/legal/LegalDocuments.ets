@@ -173,7 +173,7 @@ export const USER_AGREEMENT: LegalDocument = new LegalDocument(
     new LegalSection(
       '十七、联系我们',
       [
-        '如您对本协议有疑问、意见或投诉，可通过华为应用市场本应用详情页公示的开发者联系方式与我们联系；本应用开源后，也可通过开源仓库的 Issue 渠道反馈。我们将在收到后十五个工作日内予以答复。',
+        '如您对本协议有疑问、意见或投诉，可通过华为应用市场本应用详情页公示的开发者联系方式与我们联系；本应用已开源，也可通过 GitHub 仓库的 Issue 渠道反馈：https://github.com/JesseLee-CN/njuschedule-hmos/issues 。我们将在收到后十五个工作日内予以答复。',
       ]
     ),
     new LegalSection(
@@ -208,7 +208,7 @@ export const PRIVACY_POLICY: LegalDocument = new LegalDocument(
       '二、我们是谁与联系方式',
       [
         '个人信息处理者为呢喃课表开发者 JesseLee。本应用无账号体系、无自建服务器，不设个人信息保护专职机构。',
-        '如您对本政策或个人信息处理有疑问、意见、投诉或权利请求，可通过华为应用市场本应用详情页公示的开发者联系方式与我们联系；本应用开源后，也可通过开源仓库的 Issue 渠道反馈。我们将在收到后十五个工作日内答复。',
+        '如您对本政策或个人信息处理有疑问、意见、投诉或权利请求，可通过华为应用市场本应用详情页公示的开发者联系方式与我们联系；本应用已开源，也可通过 GitHub 仓库的 Issue 渠道反馈：https://github.com/JesseLee-CN/njuschedule-hmos/issues 。我们将在收到后十五个工作日内答复。',
       ]
     ),
     new LegalSection(

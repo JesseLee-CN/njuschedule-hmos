@@ -20,8 +20,8 @@ import { SectionHeader } from '../../common/ui/SectionHeader';
 import { SettingsRow, SettingsRowDivider } from './SettingsCommon';
 
 const DEVELOPER_UPSTREAM: string = 'idealclover';
-/** 本应用的 GitHub 贡献者页面：仓库开源后填写（例如 https://github.com/<owner>/<repo>/graphs/contributors）。 */
-const LINK_CONTRIBUTORS: string = '';
+/** 本应用的 GitHub 贡献者页面。 */
+const LINK_CONTRIBUTORS: string = 'https://github.com/JesseLee-CN/njuschedule-hmos/graphs/contributors';
 /** UI 组织参考项目。 */
 const KAZUMI_REPO: string = 'https://github.com/Predidit/Kazumi';
 

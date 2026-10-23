@@ -26,11 +26,12 @@ const ROUTE_ACKNOWLEDGEMENTS: string = 'acknowledgements';
 const DEVELOPER_UPSTREAM: string = 'idealclover';
 const DEVELOPER_REWRITE: string = 'JesseLee';
 
-/** 远程仓库/社区链接：待开源仓库上线后填写（当前留空，页面显示「待补充」）。 */
-const LINK_SOURCE_CODE: string = '';
-const LINK_PROJECT_HOME: string = '';
-const LINK_ISSUES: string = '';
-const LINK_CONTRIBUTING: string = '';
+/** GitHub 仓库链接。 */
+const REPO_URL: string = 'https://github.com/JesseLee-CN/njuschedule-hmos';
+const LINK_SOURCE_CODE: string = REPO_URL;
+const LINK_PROJECT_HOME: string = REPO_URL;
+const LINK_ISSUES: string = 'https://github.com/JesseLee-CN/njuschedule-hmos/issues';
+const LINK_CONTRIBUTING: string = 'https://github.com/JesseLee-CN/njuschedule-hmos/blob/main/CONTRIBUTING.md';
 
 @ComponentV2
 export struct AboutPage {
@@ -176,8 +177,8 @@ export struct AboutPage {
         title: '原项目开发者',
         subtitle: '上游 Flutter 版作者',
         trailingText: DEVELOPER_UPSTREAM,
-        showArrow: false,
         onTap: () => {
+          openUrl(this.getUIContext(), `https://github.com/${DEVELOPER_UPSTREAM}`);
         }
       })
       SettingsRowDivider()
@@ -186,8 +187,8 @@ export struct AboutPage {
         title: '重写开发者',
         subtitle: 'HarmonyOS / ArkUI 原生版',
         trailingText: DEVELOPER_REWRITE,
-        showArrow: false,
         onTap: () => {
+          openUrl(this.getUIContext(), `https://github.com/${DEVELOPER_REWRITE}`);
         }
       })
       SettingsRowDivider()

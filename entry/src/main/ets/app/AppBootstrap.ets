@@ -80,7 +80,7 @@ export class AppBootstrap {
   }
 
   /** 隐私政策同意状态：版本号一致才算已同意。 */
-  static readonly PRIVACY_VERSION: number = 5;
+  static readonly PRIVACY_VERSION: number = 6;
 
   private static async restorePrivacy(): Promise<void> {
     let accepted: number = 0;
