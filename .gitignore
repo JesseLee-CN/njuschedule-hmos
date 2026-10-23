@@ -1,0 +1,33 @@
+/node_modules
+/oh_modules
+/local.properties
+/.idea
+**/build
+/.hvigor
+.cxx
+/.clangd
+/.clang-format
+/.clang-tidy
+**/.test
+/.appanalyzer
+/.cache
+**/.preview
+
+# 本机签名材料（只提交 external-signing-config.example.json）
+/external-signing-config.json
+
+# Agent / IDE 本地状态
+/.claude
+/.codex
+/docs/.local
+
+# 开源准备：常见本地文件与签名材料兜底（签名材料一律不入库）
+.DS_Store
+*.log
+/.vscode
+/.dsh
+/*.p12
+/*.cer
+/*.p7b
+/*.jks
+/*.keystore

@@ -1,0 +1,52 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "呢喃课表 主模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "呢喃课表"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "呢喃课表"
+    },
+    {
+      "name": "app_name",
+      "value": "呢喃课表"
+    },
+    {
+      "name": "widget_label",
+      "value": "呢喃课表 小组件"
+    },
+    {
+      "name": "widget_desc",
+      "value": "在桌面查看今天的课程"
+    },
+    {
+      "name": "widget_2x2_name",
+      "value": "今日课程（2x2）"
+    },
+    {
+      "name": "widget_2x2_desc",
+      "value": "显示今天最多 3 节课"
+    },
+    {
+      "name": "widget_2x4_name",
+      "value": "今日课程（2x4）"
+    },
+    {
+      "name": "widget_2x4_desc",
+      "value": "竖向排列，显示今天最多 6 节课"
+    },
+    {
+      "name": "widget_4x4_name",
+      "value": "本周课表（4x4）"
+    },
+    {
+      "name": "widget_4x4_desc",
+      "value": "周一至周五的本周课程速览"
+    }
+  ]
+}

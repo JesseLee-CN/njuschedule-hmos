@@ -1,0 +1,116 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#F8F8FA"
+    },
+    {
+      "name": "app_bg",
+      "value": "#F8F8FA"
+    },
+    {
+      "name": "app_appbar",
+      "value": "#EEEEF1"
+    },
+    {
+      "name": "app_surface",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "app_surface_high",
+      "value": "#E9E9ED"
+    },
+    {
+      "name": "app_surface_pressed",
+      "value": "#E2E2E7"
+    },
+    {
+      "name": "app_outline",
+      "value": "#D9D9DE"
+    },
+    {
+      "name": "app_outline_light",
+      "value": "#E7E7EC"
+    },
+    {
+      "name": "app_text_primary",
+      "value": "#1A1A1C"
+    },
+    {
+      "name": "app_text_secondary",
+      "value": "#5C5C63"
+    },
+    {
+      "name": "app_text_tertiary",
+      "value": "#8E8E96"
+    },
+    {
+      "name": "app_text_on_primary",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "app_primary",
+      "value": "#0095F9"
+    },
+    {
+      "name": "app_primary_light",
+      "value": "#E6F4FE"
+    },
+    {
+      "name": "app_primary_dark",
+      "value": "#0079CC"
+    },
+    {
+      "name": "app_error",
+      "value": "#C52830"
+    },
+    {
+      "name": "app_error_light",
+      "value": "#FDECEC"
+    },
+    {
+      "name": "app_warning",
+      "value": "#A96200"
+    },
+    {
+      "name": "app_warning_light",
+      "value": "#FFF4E0"
+    },
+    {
+      "name": "app_success",
+      "value": "#2E7D32"
+    },
+    {
+      "name": "app_success_light",
+      "value": "#E8F5E9"
+    },
+    {
+      "name": "app_grid_line",
+      "value": "#E4E4E9"
+    },
+    {
+      "name": "app_grid_weekend",
+      "value": "#F1F1F5"
+    },
+    {
+      "name": "app_today_bg",
+      "value": "#E6F4FE"
+    },
+    {
+      "name": "app_now_line",
+      "value": "#0095F9"
+    },
+    {
+      "name": "app_overlay_scrim",
+      "value": "#66000000"
+    },
+    {
+      "name": "app_dialog_bg",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "app_surface_translucent",
+      "value": "#B3FFFFFF"
+    }
+  ]
+}

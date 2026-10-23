@@ -1,0 +1,13 @@
+呢喃课表 (NJU Schedule NEXT)
+
+本应用「呢喃课表」是上游项目「南哪课表」(wheretosleepinnju) 的 HarmonyOS / ArkTS 原生重写实现。
+
+- 上游 Flutter 项目：https://github.com/idealclover/NJU-Class-Shedule-Flutter （Apache License 2.0）
+- 上游 Flutter 项目作者：idealclover（https://idealclover.top）
+- HarmonyOS / ArkTS 重写开发者：JesseLee
+
+沿用的非 UI 部分：数据模型与 SQLite schema、周次/偏好逻辑、教务导入配置
+（schoolList.json）与页面解析脚本（api/tools/*.js）、分享码编码格式、讲座数据接口。
+UI 使用 ArkTS / ArkUI 原生重写。
+
+本仓库按 Apache License 2.0 发布，详见 LICENSE。

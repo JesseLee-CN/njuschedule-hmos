@@ -1,0 +1,10 @@
+{
+  "name": "entry",
+  "version": "0.1.0",
+  "description": "呢喃课表 entry module",
+  "main": "",
+  "author": "JesseLee",
+  "license": "Apache-2.0",
+  "dependencies": {}
+}
+
