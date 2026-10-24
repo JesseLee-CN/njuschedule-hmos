@@ -47,9 +47,6 @@ export class PrefKeys {
   /** 当前选中的课程配色池 id。 */
   static readonly ColorPalette: string = 'colorPalette';
 
-  // 隐私政策同意版本（旧版 key 同名：privacyVersion）
-  static readonly PrivacyVersion: string = 'privacyVersion';
-
   // 启动次数 / 评价（InitUtil）
 }
 

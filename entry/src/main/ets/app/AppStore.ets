@@ -53,7 +53,6 @@ export class AppStore {
   /** 强调色的 12% 透明叠加色（徽标/选中底）。 */
   @Trace accentSoft: string = '#26' + ColorMath.PRESETS[0].substring(1);
   @Trace backgroundImagePath: string = '';
-  @Trace privacyAccepted: boolean = true;
 
   // ---- 课表显示配置 ----
   @Trace showWeekend: boolean = false;

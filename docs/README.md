@@ -79,7 +79,7 @@ entry/src/main/resources/  string/color 资源、rawfile/import（schoolList.jso
 - 改 UI / 交互前先查 HarmonyOS 官方文档与最佳实践（RTFM / STFW），不凭记忆猜 API 或事件时序。
 - 新增权限、第三方依赖、数据 schema、导入方式前先讨论；新增开源依赖时同步 `ThirdPartyLicenseData.ets` 与 `NOTICE`。
 - 修改隐私政策时：同步 `features/settings/legal/LegalDocuments.ets` 与 `docs/privacy-policy.md`，
-  并将 `AppBootstrap.PRIVACY_VERSION` +1。
+  并与 AGC 托管隐私声明版本保持一致。
 
 ## 5. 关键实现与坑
 

@@ -82,10 +82,6 @@ export class AppState {
     AppState.store().backgroundImagePath = path;
   }
 
-  static setPrivacyAccepted(accepted: boolean): void {
-    AppState.store().privacyAccepted = accepted;
-  }
-
   static setShowWeekend(value: boolean): void {
     AppState.store().showWeekend = value;
   }

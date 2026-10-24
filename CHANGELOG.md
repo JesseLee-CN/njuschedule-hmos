@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### 变更
+
+- 隐私合规切换为华为 AGC 托管隐私声明：移除应用内自实现首启隐私弹窗与
+  `PRIVACY_VERSION` 门控；隐私政策正文仍保留应用内「关于 → 隐私政策」查看
+
 ## [0.1.2] - 2026-10-24
 
 发布版本：`versionName 0.1.2`，`versionCode 1000102`（语义版本编码：`1_000_000 + major*10000 + minor*100 + patch`，参考 Kazumi 的 `pubspec version+build` 方式）。

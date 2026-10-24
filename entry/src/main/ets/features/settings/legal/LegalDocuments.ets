@@ -6,7 +6,7 @@
  * 教务导入 ArkWeb、讲座服务、分享码本地生成、系统图库/扫码/剪贴板控件），
  * 并包含必要的服务边界、使用规范与免责声明。
  *
- * 修改文案时需同步 docs/privacy-policy.md，并把 AppBootstrap.PRIVACY_VERSION +1。
+ * 修改文案时需同步 docs/privacy-policy.md，并在 AGC 托管隐私声明中更新同一版本。
  */
 
 export const LEGAL_EFFECTIVE_DATE: string = '2026-10-24';

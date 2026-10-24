@@ -72,7 +72,7 @@ entry/src/main/ets/
 - 教务导入使用 ArkWeb + 注入 `rawfile/import/tools/*.js`；账号密码由学校页面直接处理，应用不读取/不保存。
 - 新增权限、第三方依赖、数据 schema、导入域名/方式前，先在 Issue 中讨论。
 - 隐私政策：正文在 `features/settings/legal/LegalDocuments.ets`，同步维护 `docs/privacy-policy.md`；
-  任何文案变更必须将 `AppBootstrap.PRIVACY_VERSION` +1。
+  任何文案变更需同步 AGC 托管隐私声明版本。
 - 新增开源依赖时同步 `features/settings/ThirdPartyLicenseData.ets` 与 `NOTICE`。
 
 ## 5. Git 与提交

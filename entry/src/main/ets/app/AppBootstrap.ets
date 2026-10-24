@@ -44,7 +44,6 @@ export class AppBootstrap {
       AppState.setAutoDarkAccent(await AppPreferences.getAutoDarkAccent());
       await BackgroundImage.restore();
       await WidgetData.write();
-      await AppBootstrap.restorePrivacy();
       AppState.setReady(true);
       hilog.info(DOMAIN, 'NjuSchedule', 'bootstrap done');
     } catch (err) {
@@ -77,19 +76,6 @@ export class AppBootstrap {
     store.weekIndex = week;
     store.tmpWeekIndex = tmpWeek;
     await AppBootstrap.restoreDisplayOptions();
-  }
-
-  /** 隐私政策同意状态：版本号一致才算已同意。 */
-  static readonly PRIVACY_VERSION: number = 8;
-
-  private static async restorePrivacy(): Promise<void> {
-    let accepted: number = 0;
-    try {
-      accepted = await AppPreferences.getInt(PrefKeys.PrivacyVersion, 0);
-    } catch (err) {
-      accepted = 0;
-    }
-    AppState.setPrivacyAccepted(accepted >= AppBootstrap.PRIVACY_VERSION);
   }
 
   /** 显示配置：prefs → AppStore（运行时真源）。 */

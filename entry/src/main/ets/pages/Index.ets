@@ -18,11 +18,8 @@ import {
   ScrollEffectType
 } from '@kit.UIDesignKit';
 import { SymbolGlyphModifier } from '@kit.ArkUI';
-import { common } from '@kit.AbilityKit';
-import { AppPreferences, PrefKeys } from '../app/AppPreferences';
 import { AppState } from '../app/AppState';
 import { AppStore } from '../app/AppStore';
-import { AppBootstrap } from '../app/AppBootstrap';
 import { TabBarAutoHide } from '../common/ui/TabBarAutoHide';
 
 import { CourseTableRepository } from '../data/CourseTableRepository';
@@ -40,8 +37,6 @@ import { OpenSourceLicensesPage } from '../features/settings/OpenSourceLicensesP
 import { AcknowledgementsPage } from '../features/settings/AcknowledgementsPage';
 import { LicenseDetailPage } from '../features/settings/LicenseDetailPage';
 import { PrivacyPage } from '../features/settings/PrivacyPage';
-import { LegalDocumentView } from '../features/settings/legal/LegalDocumentView';
-import { PRIVACY_POLICY } from '../features/settings/legal/LegalDocuments';
 import { ImportCodePage } from '../features/share/ImportCodePage';
 import { SharePage } from '../features/share/SharePage';
 import { ManageTablesPage } from '../features/settings/ManageTablesPage';
@@ -59,8 +54,6 @@ struct Index {
   private weekScrollers: Scroller[] = [];
   private coursesScroller: Scroller = new Scroller();
   private settingsScroller: Scroller = new Scroller();
-  /** 首启弹窗内查看隐私政策全文时的滚动容器。 */
-  private legalDocScroller: Scroller = new Scroller();
   private pageStack: NavPathStack = new NavPathStack();
   private tabLabels: string[] = ['课表', '课程', '设置'];
 
@@ -69,8 +62,6 @@ struct Index {
   /** 当前课表名（标题栏副标题显示「课表名 + 第 N 周」）。 */
   @Local tableName: string = '我的课表';
   @Local activeTabIndex: number = 0;
-  /** 首启弹窗是否正在查看隐私政策全文。 */
-  @Local showPrivacyDoc: boolean = false;
   /** 只把「当前 Tab 正在使用的」Scroller 绑定给 HdsNavigation（官方 FAQ 场景二），避免 25 个周页面互相干扰。 */
   @Local navScrollables: Scroller[] = [];
   /** 当前绑定给课表 Tab 的滚动容器（25 个周页面轮换）。 */
@@ -237,180 +228,6 @@ struct Index {
     }
   }
 
-  /** 首启确认：摘要面板 + 可切换到隐私政策全文（不离开弹窗即可阅读）。 */
-  @Builder
-  private privacyOverlay() {
-    Stack() {
-      Column()
-        .width('100%')
-        .height('100%')
-        .backgroundColor(Colors.Scrim)
-
-      if (!this.showPrivacyDoc) {
-        this.privacyConsentPanel()
-      } else {
-        this.privacyDocumentPanel()
-      }
-    }
-    .width('100%')
-    .height('100%')
-  }
-
-  @Builder
-  private privacyConsentPanel() {
-    Column({ space: Spacing.Lg }) {
-      Text('隐私政策')
-        .fontSize(FontSize.Headline)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Colors.TextPrimary)
-        .width('100%')
-
-      Scroll() {
-        Column({ space: Spacing.Sm }) {
-          Text('欢迎使用「呢喃课表」！在开始之前，请了解：')
-            .fontSize(FontSize.BodySm)
-            .fontColor(Colors.TextSecondary)
-            .width('100%')
-          Text('· 我们不会收集、上传你的任何个人信息；没有账号体系，也没有自建服务器。')
-            .fontSize(FontSize.BodySm)
-            .fontColor(Colors.TextSecondary)
-            .width('100%')
-          Text('· 课表、课程、设置、背景图与小组件数据全部保存在本机，卸载即删除。')
-            .fontSize(FontSize.BodySm)
-            .fontColor(Colors.TextSecondary)
-            .width('100%')
-          Text('· 网络仅用于你主动使用的教务导入与讲座列表；分享码在本机生成。')
-            .fontSize(FontSize.BodySm)
-            .fontColor(Colors.TextSecondary)
-            .width('100%')
-          Text('· 本应用不集成任何第三方 SDK，仅申请网络权限。')
-            .fontSize(FontSize.BodySm)
-            .fontColor(Colors.TextSecondary)
-            .width('100%')
-        }
-        .alignItems(HorizontalAlign.Start)
-        .width('100%')
-      }
-      .height(168)
-      .width('100%')
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
-
-      Button('查看完整隐私政策')
-        .width('100%')
-        .height(40)
-        .fontSize(FontSize.Caption)
-        .backgroundColor(Colors.SurfaceHigh)
-        .fontColor(Colors.TextPrimary)
-        .onClick(() => {
-          this.showPrivacyDoc = true;
-        })
-
-      Text('点击「同意」即表示你已阅读并同意《隐私政策》的全部内容。')
-        .fontSize(FontSize.Caption)
-        .fontColor(Colors.TextTertiary)
-        .width('100%')
-
-      Row({ space: Spacing.Md }) {
-        Button('不同意并退出')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(FontSize.BodySm)
-          .backgroundColor(Colors.SurfaceHigh)
-          .fontColor(Colors.TextSecondary)
-          .onClick(() => {
-            this.declinePrivacy();
-          })
-        Button('同意')
-          .layoutWeight(1)
-          .height(44)
-          .fontSize(FontSize.BodySm)
-          .backgroundColor(this.store.accentDisplay)
-          .fontColor(this.store.accentOn)
-          .onClick(() => {
-            this.acceptPrivacy();
-          })
-      }
-      .width('100%')
-    }
-    .width('86%')
-    .constraintSize({ maxWidth: 520 })
-    .padding(Spacing.Xl)
-    .backgroundColor(Colors.Dialog)
-    .borderRadius(Radius.Xl)
-    .alignItems(HorizontalAlign.Start)
-  }
-
-  @Builder
-  private privacyDocumentPanel() {
-    Column({ space: Spacing.Md }) {
-      Row({ space: Spacing.Sm }) {
-        Text('‹ 返回')
-          .fontSize(FontSize.BodySm)
-          .fontColor(this.store.accentDisplay)
-          .onClick(() => {
-            this.showPrivacyDoc = false;
-          })
-        Text('隐私政策')
-          .fontSize(FontSize.Title)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(Colors.TextPrimary)
-          .layoutWeight(1)
-          .textAlign(TextAlign.End)
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-      Scroll(this.legalDocScroller) {
-        Column() {
-          LegalDocumentView({ doc: PRIVACY_POLICY })
-        }
-        .width('100%')
-      }
-      .width('100%')
-      .layoutWeight(1)
-      .align(Alignment.Top)
-      .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.Spring)
-
-      Button('返回')
-        .width('100%')
-        .height(44)
-        .fontSize(FontSize.BodySm)
-        .backgroundColor(Colors.SurfaceHigh)
-        .fontColor(Colors.TextPrimary)
-        .onClick(() => {
-          this.showPrivacyDoc = false;
-        })
-    }
-    .width('92%')
-    .height('88%')
-    .constraintSize({ maxWidth: 720 })
-    .padding(Spacing.Xl)
-    .backgroundColor(Colors.Dialog)
-    .borderRadius(Radius.Xl)
-    .alignItems(HorizontalAlign.Start)
-  }
-
-  private acceptPrivacy(): void {
-    this.showPrivacyDoc = false;
-    AppPreferences.put(PrefKeys.PrivacyVersion, AppBootstrap.PRIVACY_VERSION).then(() => {
-      AppState.setPrivacyAccepted(true);
-    }).catch((err: Error) => {
-      console.warn(`[Index] save privacy acceptance failed: ${JSON.stringify(err)}`);
-      AppState.setPrivacyAccepted(true);
-    });
-  }
-
-  private declinePrivacy(): void {
-    try {
-      const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-      context.terminateSelf();
-    } catch (err) {
-      console.warn(`[Index] terminateSelf failed: ${JSON.stringify(err)}`);
-    }
-  }
-
   build() {
     Stack() {
       Column() {
@@ -521,10 +338,6 @@ struct Index {
           .onClick(() => {
             AppState.setWeekPickerOpen(true);
           })
-      }
-
-      if (!this.store.privacyAccepted) {
-        this.privacyOverlay()
       }
     }
     .width('100%')
