@@ -28,39 +28,103 @@ export struct LecturesPage {
   /** List + LazyForEach 数据源（讲座分页可能很长，避免一次构建全部卡片）。 */
   private lecturesSource: ArrayDataSource<Lecture> = new ArrayDataSource<Lecture>();
   @Local tags: string[] = [];
-  @Local selectedTag: string = '';
+  /** 选中的校区；空数组=全部，多个=多选。 */
+  @Local selectedTags: string[] = [];
   @Local page: number = 1;
   @Local totalPage: number = 1;
   @Local loading: boolean = true;
   @Local loadingMore: boolean = false;
   @Local errorText: string = '';
   @Local addingId: number = 0;
+  @Local removingId: number = 0;
+  /** 当前课表中已加入的讲座标题（用于按钮「已加入」状态）。 */
+  @Local joinedTitles: string[] = [];
 
   private scroller: Scroller = new Scroller();
+  private refreshSeq: number = 0;
 
   aboutToAppear(): void {
     this.refresh();
   }
 
-  private async refresh(): Promise<void> {
-    this.loading = true;
+  /** 同步当前课表中已加入的讲座标题，驱动按钮「已加入」状态。 */
+  private async syncJoinedTitles(): Promise<void> {
+    try {
+      const tableId: number = this.store.tableId > 0 ? this.store.tableId : 1;
+      const courses: Course[] = await CourseRepository.getAll(tableId);
+      const names: string[] = [];
+      for (let i = 0; i < courses.length; i++) {
+        if (courses[i].importType === LegacyConstant.ADD_BY_LECTURE) {
+          names.push(courses[i].name);
+        }
+      }
+      this.joinedTitles = names;
+    } catch (err) {
+      this.joinedTitles = [];
+    }
+  }
+
+  private isJoined(lecture: Lecture): boolean {
+    return this.joinedTitles.includes(lecture.title);
+  }
+
+  private activeTags(): string[] {
+    return this.selectedTags.length === 0 ? [''] : this.selectedTags;
+  }
+
+  private mergeLectures(groups: Lecture[][]): Lecture[] {
+    const seen: Set<number> = new Set<number>();
+    const merged: Lecture[] = [];
+    for (let g = 0; g < groups.length; g++) {
+      const group: Lecture[] = groups[g];
+      for (let i = 0; i < group.length; i++) {
+        if (!seen.has(group[i].id)) {
+          seen.add(group[i].id);
+          merged.push(group[i]);
+        }
+      }
+    }
+    return merged;
+  }
+
+  private async refresh(showLoading: boolean = true): Promise<void> {
+    const seq: number = ++this.refreshSeq;
+    if (showLoading) {
+      this.loading = true;
+    }
     this.errorText = '';
-    this.page = 1;
     try {
       if (this.tags.length === 0) {
         this.tags = await LectureApi.getTags();
       }
-      const result: LecturePage = await LectureApi.getPage(1, 10, this.selectedTag);
-      this.lectures = result.data;
+      const pages: LecturePage[] = await Promise.all(
+        this.activeTags().map((tag: string) => LectureApi.getPage(1, 10, tag)));
+      if (seq !== this.refreshSeq) {
+        return;
+      }
+      this.lectures = this.mergeLectures(pages.map((page: LecturePage) => page.data));
       this.lecturesSource.setData(this.lectures);
-      this.totalPage = result.totalPage;
       this.page = 1;
+      this.totalPage = 1;
+      for (let i = 0; i < pages.length; i++) {
+        this.totalPage = Math.max(this.totalPage, pages[i].totalPage);
+      }
+      await this.syncJoinedTitles();
     } catch (err) {
-      this.errorText = '讲座列表加载失败，请检查网络后重试';
-      this.lectures = [];
-      this.lecturesSource.setData(this.lectures);
+      if (seq !== this.refreshSeq) {
+        return;
+      }
+      if (showLoading) {
+        this.errorText = '讲座列表加载失败，请检查网络后重试';
+        this.lectures = [];
+        this.lecturesSource.setData(this.lectures);
+      } else {
+        Feedback.toast(this.getUIContext(), '筛选失败，请重试');
+      }
     } finally {
-      this.loading = false;
+      if (seq === this.refreshSeq && showLoading) {
+        this.loading = false;
+      }
     }
   }
 
@@ -68,14 +132,26 @@ export struct LecturesPage {
     if (this.loadingMore || this.page >= this.totalPage) {
       return;
     }
+    const seq: number = this.refreshSeq;
     this.loadingMore = true;
     try {
       const next: number = this.page + 1;
-      const result: LecturePage = await LectureApi.getPage(next, 10, this.selectedTag);
-      this.lectures = this.lectures.concat(result.data);
+      const pages: LecturePage[] = await Promise.all(
+        this.activeTags().map((tag: string) => LectureApi.getPage(next, 10, tag)));
+      if (seq !== this.refreshSeq) {
+        return;
+      }
+      const groups: Lecture[][] = [this.lectures];
+      for (let i = 0; i < pages.length; i++) {
+        groups.push(pages[i].data);
+      }
+      this.lectures = this.mergeLectures(groups);
       this.lecturesSource.setData(this.lectures);
       this.page = next;
-      this.totalPage = result.totalPage;
+      for (let i = 0; i < pages.length; i++) {
+        this.totalPage = Math.max(this.totalPage, pages[i].totalPage);
+      }
+      await this.syncJoinedTitles();
     } catch (err) {
       Feedback.toast(this.getUIContext(), '加载更多失败');
     } finally {
@@ -83,12 +159,22 @@ export struct LecturesPage {
     }
   }
 
-  private selectTag(tag: string): void {
-    if (this.selectedTag === tag) {
-      return;
+  /** 全部与校区互斥；校区支持多选，全部取消时回到全部。 */
+  private toggleTag(tag: string): void {
+    if (tag === '') {
+      if (this.selectedTags.length === 0) {
+        return;
+      }
+      this.selectedTags = [];
+    } else {
+      const index: number = this.selectedTags.indexOf(tag);
+      if (index >= 0) {
+        this.selectedTags = this.selectedTags.filter((item: string) => item !== tag);
+      } else {
+        this.selectedTags = this.selectedTags.concat([tag]);
+      }
     }
-    this.selectedTag = tag;
-    this.refresh();
+    this.refresh(false);
   }
 
   private startDate(lecture: Lecture): Date {
@@ -143,6 +229,7 @@ export struct LecturesPage {
       const tableId: number = this.store.tableId > 0 ? this.store.tableId : 1;
       const exists: boolean = await CourseRepository.checkHasCourseByName(tableId, lecture.title);
       if (exists) {
+        await this.syncJoinedTitles();
         Feedback.toast(this.getUIContext(), '这门讲座已在课表中');
         return;
       }
@@ -165,6 +252,7 @@ export struct LecturesPage {
       AppState.bumpDataRevision();
       LectureApi.addCount(lecture.id);
       lecture.count += 1;
+      this.joinedTitles = this.joinedTitles.concat([lecture.title]);
       Feedback.toast(this.getUIContext(), '已加入课表');
     } catch (err) {
       console.error(`[Lecture] add failed: ${JSON.stringify(err)}`);
@@ -174,6 +262,40 @@ export struct LecturesPage {
     }
   }
 
+
+  /** 取消加入：从当前课表删除该讲座对应的课程。 */
+  private async removeFromTable(lecture: Lecture): Promise<void> {
+    if (this.addingId !== 0 || this.removingId !== 0) {
+      return;
+    }
+    this.removingId = lecture.id;
+    try {
+      const tableId: number = this.store.tableId > 0 ? this.store.tableId : 1;
+      const courses: Course[] = await CourseRepository.getAll(tableId);
+      let target: Course | undefined = undefined;
+      for (let i = 0; i < courses.length; i++) {
+        if (courses[i].name === lecture.title &&
+          courses[i].importType === LegacyConstant.ADD_BY_LECTURE) {
+          target = courses[i];
+          break;
+        }
+      }
+      if (target === undefined) {
+        await this.syncJoinedTitles();
+        Feedback.toast(this.getUIContext(), '这门讲座不在课表中');
+        return;
+      }
+      await CourseRepository.delete(target.id);
+      AppState.bumpDataRevision();
+      this.joinedTitles = this.joinedTitles.filter((title: string) => title !== lecture.title);
+      Feedback.toast(this.getUIContext(), '已取消加入');
+    } catch (err) {
+      console.error(`[Lecture] remove failed: ${JSON.stringify(err)}`);
+      Feedback.toast(this.getUIContext(), '取消加入失败');
+    } finally {
+      this.removingId = 0;
+    }
+  }
 
   @Builder
   private tagChips() {
@@ -196,12 +318,16 @@ export struct LecturesPage {
   private tagChip(label: string, tag: string) {
     Text(label)
       .fontSize(FontSize.BodySm)
-      .fontColor(this.selectedTag === tag ? this.store.accentOn : Colors.TextSecondary)
-      .backgroundColor(this.selectedTag === tag ? this.store.accentDisplay : Colors.SurfaceHigh)
+      .fontColor(tag === '' ?
+        (this.selectedTags.length === 0 ? this.store.accentOn : Colors.TextSecondary) :
+        (this.selectedTags.includes(tag) ? this.store.accentOn : Colors.TextSecondary))
+      .backgroundColor(tag === '' ?
+        (this.selectedTags.length === 0 ? this.store.accentDisplay : Colors.SurfaceHigh) :
+        (this.selectedTags.includes(tag) ? this.store.accentDisplay : Colors.SurfaceHigh))
       .borderRadius(Radius.Round)
       .padding({ left: Spacing.Md, right: Spacing.Md, top: 6, bottom: 6 })
       .onClick(() => {
-        this.selectTag(tag);
+        this.toggleTag(tag);
       })
   }
 
@@ -278,16 +404,23 @@ export struct LecturesPage {
             .fontSize(FontSize.Caption)
             .fontColor(Colors.TextTertiary)
         }
-        Button(this.addingId === lecture.id ? '加入中…' : (this.isExpired(lecture) ? '已结束' : '加入课表'))
+        Button(this.addingId === lecture.id ? '加入中…' :
+          (this.removingId === lecture.id ? '取消中…' :
+            (this.isJoined(lecture) ? '已加入' : (this.isExpired(lecture) ? '已结束' : '加入课表'))))
           .height(32)
           .fontSize(FontSize.Caption)
-          .backgroundColor(this.isExpired(lecture) ? Colors.SurfaceHigh :
-            this.store.accentDisplay)
-          .fontColor(this.isExpired(lecture) ? Colors.TextTertiary :
-            this.store.accentOn)
-          .enabled(!this.isExpired(lecture) && this.addingId === 0)
+          .backgroundColor(this.isExpired(lecture) && !this.isJoined(lecture) ?
+            Colors.SurfaceHigh : (this.isJoined(lecture) ? Colors.SurfaceHigh : this.store.accentDisplay))
+          .fontColor(this.isExpired(lecture) && !this.isJoined(lecture) ?
+            Colors.TextTertiary : (this.isJoined(lecture) ? Colors.TextSecondary : this.store.accentOn))
+          .enabled((this.isJoined(lecture) || !this.isExpired(lecture)) &&
+            this.addingId !== lecture.id && this.removingId !== lecture.id)
           .onClick(() => {
-            this.addToTable(lecture);
+            if (this.isJoined(lecture)) {
+              this.removeFromTable(lecture);
+            } else {
+              this.addToTable(lecture);
+            }
           })
       }
       .width('100%')
