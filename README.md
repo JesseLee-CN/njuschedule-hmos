@@ -16,6 +16,37 @@
 >
 > **问题反馈**：https://github.com/JesseLee-CN/njuschedule-hmos/issues
 
+## 界面预览
+
+截图使用展示数据，不包含真实课表信息。
+
+### 手机
+
+<table>
+  <tr>
+    <td align="center"><img src="./docs/images/UIdisplay/phone/background.png" width="160" alt="手机课表背景"><br/>课表背景</td>
+    <td align="center"><img src="./docs/images/UIdisplay/phone/color.png" width="160" alt="手机自定义外观"><br/>自定义外观</td>
+    <td align="center"><img src="./docs/images/UIdisplay/phone/coursemanage.png" width="160" alt="手机课程管理"><br/>课程管理</td>
+    <td align="center"><img src="./docs/images/UIdisplay/phone/coursesheet.png" width="160" alt="手机课程详情"><br/>课程详情</td>
+    <td align="center"><img src="./docs/images/UIdisplay/phone/darkmode.png" width="160" alt="手机深色模式"><br/>深色模式</td>
+  </tr>
+</table>
+
+### 平板 / 2in1
+
+<table>
+  <tr>
+    <td align="center"><img src="./docs/images/UIdisplay/tabletand2in1/background.jpg" width="300" alt="平板课表背景"><br/>课表背景</td>
+    <td align="center"><img src="./docs/images/UIdisplay/tabletand2in1/color.jpg" width="300" alt="平板自定义外观"><br/>自定义外观</td>
+    <td align="center"><img src="./docs/images/UIdisplay/tabletand2in1/coursemanage.jpg" width="300" alt="平板课程管理"><br/>课程管理</td>
+  </tr>
+  <tr>
+    <td align="center"><img src="./docs/images/UIdisplay/tabletand2in1/coursesheet.jpg" width="300" alt="平板课程详情"><br/>课程详情</td>
+    <td align="center"><img src="./docs/images/UIdisplay/tabletand2in1/darkmode.jpg" width="300" alt="平板深色模式"><br/>深色模式</td>
+    <td></td>
+  </tr>
+</table>
+
 ## 功能
 
 - **课表周视图**：25 周页面横滑切换、今日高亮、非本周淡显、时间冲突角标、自由时间课程、背景图
