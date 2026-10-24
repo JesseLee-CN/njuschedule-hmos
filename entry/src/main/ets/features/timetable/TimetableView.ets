@@ -74,6 +74,8 @@ export struct TimetableView {
   @Local currentIndex: number = 0;
   /** 用户手势滑动中：此时不响应外部跳页，避免打断 / 回弹。 */
   private userSwiping: boolean = false;
+  /** 外部跳周时是否使用滑动动画（「回到本周」按钮使用）。 */
+  private animateWeekJump: boolean = false;
 
   @Local backgroundPixel: image.PixelMap | undefined = undefined;
 
@@ -134,9 +136,11 @@ export struct TimetableView {
     const target: number = Math.max(0, Math.min(this.store.tmpWeekIndex - 1, LegacyConfig.MAX_WEEKS - 1));
     if (this.currentIndex !== target) {
       this.currentIndex = target;
+      const useAnimation: boolean = this.animateWeekJump;
+      this.animateWeekJump = false;
       setTimeout(() => {
         try {
-          this.weekSwiper.changeIndex(target);
+          this.weekSwiper.changeIndex(target, useAnimation);
         } catch (err) {
           console.warn(`[Timetable] jump page failed: ${JSON.stringify(err)}`);
         }
@@ -316,6 +320,8 @@ export struct TimetableView {
   }
 
   private backToCurrentWeek(): void {
+    // 模拟快速滑回本周：走 Swiper 的滑动动画，而不是瞬间跳页
+    this.animateWeekJump = true;
     this.changeWeek(this.store.weekIndex);
   }
 
@@ -671,10 +677,10 @@ export struct TimetableView {
       .width('100%')
       .height('100%')
 
-      // 右下角浮动按钮：回到本周（仅划离本周时显示）+ 自由时间课程入口
+      // 右下角浮动按钮：回到本周（仅划离本周时显示）在自由时间课程入口上方
       if (this.store.tmpWeekIndex !== this.store.weekIndex ||
         (this.store.showFreeClass && this.freeCourses.length > 0)) {
-        Row({ space: Spacing.Md }) {
+        Column({ space: Spacing.Md }) {
           if (this.store.tmpWeekIndex !== this.store.weekIndex) {
             BackToCurrentWeekButton({
               onTap: (): void => {
@@ -693,8 +699,7 @@ export struct TimetableView {
           }
         }
         .width('100%')
-        .justifyContent(FlexAlign.End)
-        .alignItems(VerticalAlign.Top)
+        .alignItems(HorizontalAlign.End)
         .padding({ right: Spacing.Lg })
         .margin({ bottom: px2vp(this.store.windowBottomInset) + 88 })
         .hitTestBehavior(HitTestMode.Transparent)
