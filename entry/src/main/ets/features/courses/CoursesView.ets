@@ -313,26 +313,32 @@ export struct CoursesView {
         List({ space: Spacing.Md, scroller: this.scroller }) {
           ListItem() {
             Row() {
-              this.actionsRow()
+              Row() {
+                this.actionsRow()
+              }
+              .width('100%')
+              .constraintSize({ maxWidth: 720 })
             }
             .width('100%')
-            .constraintSize({ maxWidth: 720 })
+            .justifyContent(FlexAlign.Center)
             .padding({
               left: Spacing.Lg,
               right: Spacing.Lg,
               top: HdsMetrics.contentTopInset(px2vp(this.store.windowTopInset)) + Spacing.Md
             })
-            .justifyContent(FlexAlign.Center)
           }
           LazyForEach(this.groupsSource, (group: CourseGroup) => {
             ListItem() {
               Row() {
-                this.groupCard(group)
+                Row() {
+                  this.groupCard(group)
+                }
+                .width('100%')
+                .constraintSize({ maxWidth: 720 })
               }
               .width('100%')
-              .constraintSize({ maxWidth: 720 })
-              .padding({ left: Spacing.Lg, right: Spacing.Lg })
               .justifyContent(FlexAlign.Center)
+              .padding({ left: Spacing.Lg, right: Spacing.Lg })
             }
           }, (group: CourseGroup) => `${group.name}-${group.color}`)
           ListItem() {

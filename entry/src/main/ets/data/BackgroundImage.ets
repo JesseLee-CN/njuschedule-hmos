@@ -64,6 +64,8 @@ export class BackgroundImage {
     const options: photoAccessHelper.PhotoSelectOptions = new photoAccessHelper.PhotoSelectOptions();
     options.MIMEType = photoAccessHelper.PhotoViewMIMETypes.IMAGE_TYPE;
     options.maxSelectNumber = 1;
+    // 系统图库自带编辑能力：允许用户在系统 UI 中裁剪/旋转，而不是由应用强行缩放。
+    options.isEditSupported = true;
     const result: photoAccessHelper.PhotoSelectResult = await picker.select(options);
     if (result.photoUris.length === 0) {
       return false;
@@ -120,8 +122,15 @@ export class BackgroundImage {
     }
     try {
       const source: image.ImageSource = image.createImageSource(path);
+      const info: image.ImageInfo = await source.getImageInfo();
+      // 不再固定解码成 1080x1800；按原图比例限制最大边，交给 ImageFit.Cover 按屏幕自适应取景。
+      const maxSide: number = 2048;
+      const scale: number = Math.min(1, maxSide / Math.max(info.size.width, info.size.height));
       const options: image.DecodingOptions = {
-        desiredSize: { width: 1080, height: 1800 }
+        desiredSize: {
+          width: Math.max(1, Math.round(info.size.width * scale)),
+          height: Math.max(1, Math.round(info.size.height * scale))
+        }
       };
       const pixelMap: image.PixelMap = await source.createPixelMap(options);
       await source.release();

@@ -449,9 +449,9 @@ export struct MoreSettingsPage {
       SettingsRowDivider()
       SettingsRow({
         icon: $r('sys.symbol.picture'),
-        title: this.store.backgroundImagePath === '' ? '从相册选择' : '从相册更换',
+        title: this.store.backgroundImagePath === '' ? '从相册选择并裁剪' : '从相册更换并裁剪',
         showArrow: false,
-        subtitle: this.store.backgroundImagePath === '' ? '从系统相册选择一张图片' : '当前已设置背景图',
+        subtitle: this.store.backgroundImagePath === '' ? '在系统图库中裁剪/旋转后使用' : '当前已设置背景图',
         onTap: () => {
           this.pickBackground();
         }

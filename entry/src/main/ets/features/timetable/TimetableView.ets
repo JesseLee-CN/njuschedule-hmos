@@ -725,6 +725,14 @@ export struct TimetableView {
         height: SheetSize.FIT_CONTENT,
         dragBar: true,
         showClose: false,
+        preferType: SheetType.BOTTOM,
+        maskColor: Colors.Scrim,
+        onDisappear: () => {
+          this.detailShown = false;
+        },
+        onWillDismiss: (action: DismissSheetAction) => {
+          action.dismiss();
+        },
         backgroundColor: Colors.Background
       })
 
@@ -736,6 +744,14 @@ export struct TimetableView {
         height: SheetSize.FIT_CONTENT,
         dragBar: true,
         showClose: false,
+        preferType: SheetType.BOTTOM,
+        maskColor: Colors.Scrim,
+        onDisappear: () => {
+          this.multiShown = false;
+        },
+        onWillDismiss: (action: DismissSheetAction) => {
+          action.dismiss();
+        },
         backgroundColor: Colors.Background
       })
 
@@ -747,6 +763,14 @@ export struct TimetableView {
         height: SheetSize.LARGE,
         dragBar: false,
         showClose: false,
+        preferType: SheetType.BOTTOM,
+        maskColor: Colors.Scrim,
+        onDisappear: () => {
+          this.store.weekPickerOpen = false;
+        },
+        onWillDismiss: (action: DismissSheetAction) => {
+          action.dismiss();
+        },
         backgroundColor: Colors.Background
       })
 
@@ -758,6 +782,14 @@ export struct TimetableView {
         height: SheetSize.FIT_CONTENT,
         dragBar: true,
         showClose: false,
+        preferType: SheetType.BOTTOM,
+        maskColor: Colors.Scrim,
+        onDisappear: () => {
+          this.freeCourseSheetShown = false;
+        },
+        onWillDismiss: (action: DismissSheetAction) => {
+          action.dismiss();
+        },
         backgroundColor: Colors.Background
       })
     }
