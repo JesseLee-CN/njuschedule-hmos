@@ -63,7 +63,7 @@ devecocli check lint
 - 如果性能表现大打折扣——当前功能的思路是不是需要重新考虑
 - 新增权限、第三方依赖、数据 schema、导入方式前，请先在 Issue 中讨论
 
-当出现行为或风险改动时，您应该同步更新相关文档与测试；涉及用户协议/隐私政策的改动需将 `AppBootstrap.PRIVACY_VERSION` +1。
+当出现行为或风险改动时，您应该同步更新相关文档与测试；涉及隐私政策的改动需将 `AppBootstrap.PRIVACY_VERSION` +1。
 
 ## 更改与 Commits
 

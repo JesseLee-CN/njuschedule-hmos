@@ -39,7 +39,6 @@ devecocli check lint
 ## 文档
 
 - 开发速查手册（命令、结构、约定）：[docs/README.md](docs/README.md)
-- 用户协议：[docs/user-agreement.md](docs/user-agreement.md)
 - 隐私政策：[docs/privacy-policy.md](docs/privacy-policy.md)
 - 开源许可与致谢：应用内「关于 → 开源许可证 / 第三方许可证 / 致谢」
 - 版本记录：[CHANGELOG.md](CHANGELOG.md)

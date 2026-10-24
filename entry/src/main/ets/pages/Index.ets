@@ -40,9 +40,8 @@ import { OpenSourceLicensesPage } from '../features/settings/OpenSourceLicensesP
 import { AcknowledgementsPage } from '../features/settings/AcknowledgementsPage';
 import { LicenseDetailPage } from '../features/settings/LicenseDetailPage';
 import { PrivacyPage } from '../features/settings/PrivacyPage';
-import { UserAgreementPage } from '../features/settings/UserAgreementPage';
 import { LegalDocumentView } from '../features/settings/legal/LegalDocumentView';
-import { PRIVACY_POLICY, USER_AGREEMENT } from '../features/settings/legal/LegalDocuments';
+import { PRIVACY_POLICY } from '../features/settings/legal/LegalDocuments';
 import { ImportCodePage } from '../features/share/ImportCodePage';
 import { SharePage } from '../features/share/SharePage';
 import { ManageTablesPage } from '../features/settings/ManageTablesPage';
@@ -60,7 +59,7 @@ struct Index {
   private weekScrollers: Scroller[] = [];
   private coursesScroller: Scroller = new Scroller();
   private settingsScroller: Scroller = new Scroller();
-  /** 首启弹窗内查看用户协议/隐私政策全文时的滚动容器。 */
+  /** 首启弹窗内查看隐私政策全文时的滚动容器。 */
   private legalDocScroller: Scroller = new Scroller();
   private pageStack: NavPathStack = new NavPathStack();
   private tabLabels: string[] = ['课表', '课程', '设置'];
@@ -70,8 +69,8 @@ struct Index {
   /** 当前课表名（标题栏副标题显示「课表名 + 第 N 周」）。 */
   @Local tableName: string = '我的课表';
   @Local activeTabIndex: number = 0;
-  /** 首启弹窗当前展示的法律文档：-1=同意摘要，0=用户协议，1=隐私政策。 */
-  @Local legalDocView: number = -1;
+  /** 首启弹窗是否正在查看隐私政策全文。 */
+  @Local showPrivacyDoc: boolean = false;
   /** 只把「当前 Tab 正在使用的」Scroller 绑定给 HdsNavigation（官方 FAQ 场景二），避免 25 个周页面互相干扰。 */
   @Local navScrollables: Scroller[] = [];
   /** 当前绑定给课表 Tab 的滚动容器（25 个周页面轮换）。 */
@@ -217,8 +216,6 @@ struct Index {
       MoreSettingsPage({pageStack: this.pageStack, tableId: this.store.tableId})
     } else if (name === 'privacy') {
       PrivacyPage({})
-    } else if (name === 'agreement') {
-      UserAgreementPage({})
     } else if (name === 'about') {
       AboutPage({pageStack: this.pageStack})
     } else if (name === 'licenses') {
@@ -240,7 +237,7 @@ struct Index {
     }
   }
 
-  /** 首启确认：摘要面板 + 可切换到用户协议/隐私政策全文（不离开弹窗即可阅读）。 */
+  /** 首启确认：摘要面板 + 可切换到隐私政策全文（不离开弹窗即可阅读）。 */
   @Builder
   private privacyOverlay() {
     Stack() {
@@ -249,7 +246,7 @@ struct Index {
         .height('100%')
         .backgroundColor(Colors.Scrim)
 
-      if (this.legalDocView < 0) {
+      if (!this.showPrivacyDoc) {
         this.privacyConsentPanel()
       } else {
         this.privacyDocumentPanel()
@@ -262,7 +259,7 @@ struct Index {
   @Builder
   private privacyConsentPanel() {
     Column({ space: Spacing.Lg }) {
-      Text('用户协议与隐私政策')
+      Text('隐私政策')
         .fontSize(FontSize.Headline)
         .fontWeight(FontWeight.Bold)
         .fontColor(Colors.TextPrimary)
@@ -286,7 +283,7 @@ struct Index {
             .fontSize(FontSize.BodySm)
             .fontColor(Colors.TextSecondary)
             .width('100%')
-          Text('· 本应用不集成任何第三方 SDK。')
+          Text('· 本应用不集成任何第三方 SDK，仅申请网络权限。')
             .fontSize(FontSize.BodySm)
             .fontColor(Colors.TextSecondary)
             .width('100%')
@@ -299,29 +296,17 @@ struct Index {
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
 
-      Row({ space: Spacing.Md }) {
-        Button('查看《用户协议》')
-          .layoutWeight(1)
-          .height(40)
-          .fontSize(FontSize.Caption)
-          .backgroundColor(Colors.SurfaceHigh)
-          .fontColor(Colors.TextPrimary)
-          .onClick(() => {
-            this.legalDocView = 0;
-          })
-        Button('查看《隐私政策》')
-          .layoutWeight(1)
-          .height(40)
-          .fontSize(FontSize.Caption)
-          .backgroundColor(Colors.SurfaceHigh)
-          .fontColor(Colors.TextPrimary)
-          .onClick(() => {
-            this.legalDocView = 1;
-          })
-      }
-      .width('100%')
+      Button('查看完整隐私政策')
+        .width('100%')
+        .height(40)
+        .fontSize(FontSize.Caption)
+        .backgroundColor(Colors.SurfaceHigh)
+        .fontColor(Colors.TextPrimary)
+        .onClick(() => {
+          this.showPrivacyDoc = true;
+        })
 
-      Text('点击「同意」即表示你已阅读并同意《用户协议》与《隐私政策》的全部内容。')
+      Text('点击「同意」即表示你已阅读并同意《隐私政策》的全部内容。')
         .fontSize(FontSize.Caption)
         .fontColor(Colors.TextTertiary)
         .width('100%')
@@ -364,9 +349,9 @@ struct Index {
           .fontSize(FontSize.BodySm)
           .fontColor(this.store.accentDisplay)
           .onClick(() => {
-            this.legalDocView = -1;
+            this.showPrivacyDoc = false;
           })
-        Text(this.legalDocView === 0 ? '用户协议' : '隐私政策')
+        Text('隐私政策')
           .fontSize(FontSize.Title)
           .fontWeight(FontWeight.Medium)
           .fontColor(Colors.TextPrimary)
@@ -378,7 +363,7 @@ struct Index {
 
       Scroll(this.legalDocScroller) {
         Column() {
-          LegalDocumentView({ doc: this.legalDocView === 0 ? USER_AGREEMENT : PRIVACY_POLICY })
+          LegalDocumentView({ doc: PRIVACY_POLICY })
         }
         .width('100%')
       }
@@ -395,7 +380,7 @@ struct Index {
         .backgroundColor(Colors.SurfaceHigh)
         .fontColor(Colors.TextPrimary)
         .onClick(() => {
-          this.legalDocView = -1;
+          this.showPrivacyDoc = false;
         })
     }
     .width('92%')
@@ -408,7 +393,7 @@ struct Index {
   }
 
   private acceptPrivacy(): void {
-    this.legalDocView = -1;
+    this.showPrivacyDoc = false;
     AppPreferences.put(PrefKeys.PrivacyVersion, AppBootstrap.PRIVACY_VERSION).then(() => {
       AppState.setPrivacyAccepted(true);
     }).catch((err: Error) => {

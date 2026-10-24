@@ -20,7 +20,6 @@ import { SettingsRow, SettingsRowDivider } from './SettingsCommon';
 /** 包信息读不到时的兜底版本号（与 AppScope/app.json5 的 versionName 保持一致）。 */
 const FALLBACK_VERSION: string = '1.0.0';
 const ROUTE_PRIVACY: string = 'privacy';
-const ROUTE_AGREEMENT: string = 'agreement';
 const ROUTE_LICENSES: string = 'licenses';
 const ROUTE_ACKNOWLEDGEMENTS: string = 'acknowledgements';
 const DEVELOPER_UPSTREAM: string = 'idealclover';
@@ -185,15 +184,6 @@ export struct AboutPage {
         trailingText: DEVELOPER_REWRITE,
         onTap: () => {
           openUrl(this.getUIContext(), `https://github.com/${DEVELOPER_REWRITE}`);
-        }
-      })
-      SettingsRowDivider()
-      SettingsRow({
-        icon: $r('sys.symbol.doc_plaintext'),
-        title: '用户协议',
-        subtitle: '使用条款与服务说明',
-        onTap: () => {
-          this.pageStack.pushPathByName(ROUTE_AGREEMENT, null);
         }
       })
       SettingsRowDivider()
