@@ -12,7 +12,8 @@
 
 > 本应用不是南京大学官方应用，与学校及教务系统无隶属关系。上游 Flutter 项目：[idealclover/NJU-Class-Shedule-Flutter](https://github.com/idealclover/NJU-Class-Shedule-Flutter)（Apache-2.0）。
 >
-> **仓库**：https://github.com/JesseLee-CN/njuschedule-hmos　|　**问题反馈**：https://github.com/JesseLee-CN/njuschedule-hmos/issues
+> **仓库**：https://github.com/JesseLee-CN/njuschedule-hmos
+> **问题反馈**：https://github.com/JesseLee-CN/njuschedule-hmos/issues
 
 ## 功能
 
