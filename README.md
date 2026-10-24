@@ -1,4 +1,12 @@
-# 呢喃课表（NJU Schedule NEXT）
+<div align="center">
+
+<img src="./docs/images/app-icon.png" alt="呢喃课表应用图标" width="128" height="128" />
+
+<h1>呢喃课表（NJU Schedule NEXT）</h1>
+
+**南京大学课程表 App「南哪课表」的 HarmonyOS / ArkTS 原生重写版**
+
+</div>
 
 南京大学课程表 App「南哪课表」的 **HarmonyOS / ArkTS 原生重写版**，使用 ArkUI 声明式 UI 与状态管理 V2 实现。应用无账号体系、无自建服务器，课程与设置数据仅保存在本机。
 
