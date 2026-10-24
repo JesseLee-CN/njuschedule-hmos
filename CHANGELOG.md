@@ -4,10 +4,19 @@
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-24
+
+发布版本：`versionName 0.1.3`，`versionCode 1000103`。
+
 ### 变更
 
 - 隐私合规切换为华为 AGC 托管隐私声明：移除应用内自实现首启隐私弹窗与
-  `PRIVACY_VERSION` 门控；隐私政策正文仍保留应用内「关于 → 隐私政策」查看
+  `PRIVACY_VERSION` 门控
+- 应用内「关于 → 隐私政策」改为展示 AGC 托管隐私声明链接，不再使用本地全文；
+  托管链接由 `privacyManager` 动态查询，查询失败时使用 AGC 已生成的链接
+- 托管隐私页使用 `WebLayoutMode.FIT_CONTENT` + 外层 `Scroll` + `bindToScrollable`，
+  标题栏恢复随内容滚动跟随
+- 关于页「本项目开发者」GitHub 主页修正为 `JesseLee-CN`
 
 ## [0.1.2] - 2026-10-24
 
