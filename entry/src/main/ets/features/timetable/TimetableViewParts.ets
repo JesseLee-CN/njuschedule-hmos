@@ -64,40 +64,57 @@ export struct FreeCourseEntryButton {
   };
 
   build() {
-    Row() {
-      Stack({ alignContent: Alignment.TopEnd }) {
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.clock'))
-            .fontSize(24)
-            .fontColor([this.store.accentOn])
-        }
-        .width(52)
-        .height(52)
-        .backgroundColor(this.store.accentDisplay)
-        .shadow({ radius: 8, color: '#33000000', offsetY: 2 })
-        .onClick(() => {
-          this.onTap();
-        })
-
-        Text(`${this.count}`)
-          .fontSize(FontSize.Caption)
-          .fontColor(Colors.TextPrimary)
-          .textAlign(TextAlign.Center)
-          .width(20)
-          .height(20)
-          .borderRadius(Radius.Round)
-          .backgroundColor(Colors.Surface)
-          .border({ width: 1, color: Colors.OutlineLight })
-          .position({ x: 44, y: 0 })
+    Stack({ alignContent: Alignment.TopEnd }) {
+      Button({ type: ButtonType.Circle }) {
+        SymbolGlyph($r('sys.symbol.clock'))
+          .fontSize(24)
+          .fontColor([this.store.accentOn])
       }
-      .width(64)
-      .height(64)
+      .width(52)
+      .height(52)
+      .backgroundColor(this.store.accentDisplay)
+      .shadow({ radius: 8, color: '#33000000', offsetY: 2 })
+      .onClick(() => {
+        this.onTap();
+      })
+
+      Text(`${this.count}`)
+        .fontSize(FontSize.Caption)
+        .fontColor(Colors.TextPrimary)
+        .textAlign(TextAlign.Center)
+        .width(20)
+        .height(20)
+        .borderRadius(Radius.Round)
+        .backgroundColor(Colors.Surface)
+        .border({ width: 1, color: Colors.OutlineLight })
+        .position({ x: 44, y: 0 })
     }
-    .width('100%')
-    .justifyContent(FlexAlign.End)
-    .padding({ right: Spacing.Lg })
-    .margin({ bottom: px2vp(this.store.windowBottomInset) + 88 })
-    .hitTestBehavior(HitTestMode.Transparent)
+    .width(64)
+    .height(64)
+  }
+}
+
+/** 划离本周时出现的「回到本周」按钮：固定白底 + 强调色 Home 图标。 */
+@ComponentV2
+export struct BackToCurrentWeekButton {
+  @Local store: AppStore = AppStore.connect();
+  @Event onTap: () => void = () => {
+  };
+
+  build() {
+    Button({ type: ButtonType.Circle }) {
+      SymbolGlyph($r('sys.symbol.house'))
+        .fontSize(24)
+        .fontColor([this.store.accentDisplay])
+    }
+    .width(52)
+    .height(52)
+    .backgroundColor(Colors.FloatingWhite)
+    .shadow({ radius: 8, color: '#33000000', offsetY: 2 })
+    .accessibilityText('回到本周')
+    .onClick(() => {
+      this.onTap();
+    })
   }
 }
 

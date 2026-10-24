@@ -13,6 +13,10 @@
       "value": "#17171A"
     },
     {
+      "name": "app_floating_white",
+      "value": "#FFFFFF"
+    },
+    {
       "name": "app_surface",
       "value": "#1A1A1E"
     },

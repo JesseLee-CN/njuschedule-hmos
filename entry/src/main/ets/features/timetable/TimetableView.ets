@@ -20,7 +20,7 @@ import { AppStore } from '../../app/AppStore';
 import { AppPreferences } from '../../app/AppPreferences';
 import { ClassPeriod, LegacyConfig, LegacyConstant } from '../../common/Constants';
 import { DateUtils } from '../../common/DateUtils';
-import { Colors, FontSize, HdsMetrics, TimetableMetrics } from '../../common/design/Tokens';
+import { Colors, FontSize, HdsMetrics, Spacing, TimetableMetrics } from '../../common/design/Tokens';
 import { CourseEditParam } from '../../common/RouteParams';
 import { BackgroundImage } from '../../data/BackgroundImage';
 import { ColorPool } from '../../data/ColorPool';
@@ -31,6 +31,7 @@ import { ScheduleModel } from '../../data/ScheduleModel';
 import { CourseBlock } from './CourseBlock';
 import { TabBarAutoHide } from '../../common/ui/TabBarAutoHide';
 import {
+  BackToCurrentWeekButton,
   FreeCourseEntryButton,
   WeekHeaderRow,
   WeekPageDataSource,
@@ -670,15 +671,33 @@ export struct TimetableView {
       .width('100%')
       .height('100%')
 
-      // 右下角：自由时间课程入口（独立子组件：主题色变化只重绘按钮，不重绘整个课表）
-      if (this.store.showFreeClass && this.freeCourses.length > 0) {
-        FreeCourseEntryButton({
-          count: this.freeCourses.length,
-          onTap: (): void => {
-            this.freeSheetIndex = 0;
-            this.freeCourseSheetShown = true;
+      // 右下角浮动按钮：回到本周（仅划离本周时显示）+ 自由时间课程入口
+      if (this.store.tmpWeekIndex !== this.store.weekIndex ||
+        (this.store.showFreeClass && this.freeCourses.length > 0)) {
+        Row({ space: Spacing.Md }) {
+          if (this.store.tmpWeekIndex !== this.store.weekIndex) {
+            BackToCurrentWeekButton({
+              onTap: (): void => {
+                this.backToCurrentWeek();
+              }
+            })
           }
-        })
+          if (this.store.showFreeClass && this.freeCourses.length > 0) {
+            FreeCourseEntryButton({
+              count: this.freeCourses.length,
+              onTap: (): void => {
+                this.freeSheetIndex = 0;
+                this.freeCourseSheetShown = true;
+              }
+            })
+          }
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.End)
+        .alignItems(VerticalAlign.Top)
+        .padding({ right: Spacing.Lg })
+        .margin({ bottom: px2vp(this.store.windowBottomInset) + 88 })
+        .hitTestBehavior(HitTestMode.Transparent)
       }
 
       // ArkUI 同一组件挂多个 bindSheet 会互相干扰（详情 sheet 只暗屏不弹内容），
