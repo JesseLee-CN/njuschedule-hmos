@@ -4,18 +4,21 @@
  * 编解码格式见 `data/ShareCodec.ets`，与旧 Flutter 项目
  * `lib/Pages/Share/qr_payload_codec.dart` 完全一致，保证跨端可扫。
  */
-import { HdsNavDestination } from '@kit.UIDesignKit';
-import { generateBarcode, scanCore } from '@kit.ScanKit';
+import { HdsNavDestination, HdsNavigationMenuContentOptions, HdsNavigationTitleBarOptions } from '@kit.UIDesignKit';
+import { common } from '@kit.AbilityKit';
+import { generateBarcode, scanBarcode, scanCore } from '@kit.ScanKit';
 import { image } from '@kit.ImageKit';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { Colors, FontSize, HdsMetrics, Radius, Spacing } from '../../common/design/Tokens';
 import { Feedback } from '../../common/ui/Feedback';
 import { AppStore } from '../../app/AppStore';
+import { AppState } from '../../app/AppState';
 import { hdsSubPageTitleBar } from '../../common/ui/HdsSubPage';
-import { ShareCodec, ShareCodeStats } from '../../data/ShareCodec';
+import { DecodedSharePayload, ShareCodeError, ShareCodec, ShareCodeStats, ShareFrame } from '../../data/ShareCodec';
 import { CourseRepository } from '../../data/CourseRepository';
 import { CourseTableRepository } from '../../data/CourseTableRepository';
+import { ImportCourseCodec } from '../import/ImportPayloadCodec';
 import { CourseTable, Course } from '../../data/models/Models';
 
 @ComponentV2
@@ -36,6 +39,10 @@ export struct SharePage {
   @Local qrIndex: number = 0;
   @Local busy: boolean = true;
   @Local errorText: string = '';
+  /** 是否正在系统扫码界面。 */
+  @Local scanning: boolean = false;
+  /** 扫码导入的多帧缓存（key = group:index）。 */
+  private scannedFrames: Map<string, string> = new Map();
 
   aboutToAppear(): void {
     this.load();
@@ -110,6 +117,104 @@ export struct SharePage {
     }
   }
 
+
+  /** 分享页标题栏「扫码导入」：调起系统扫码界面并完成导入。 */
+  private async startScan(): Promise<void> {
+    if (this.scanning) {
+      return;
+    }
+    this.scanning = true;
+    try {
+      let done: boolean = false;
+      while (!done) {
+        const context: common.Context = this.getUIContext().getHostContext() as common.Context;
+        const options: scanBarcode.ScanOptions = {
+          scanTypes: [scanCore.ScanType.QR_CODE],
+          enableMultiMode: false
+        };
+        const result: scanBarcode.ScanResult = await scanBarcode.startScanForResult(context, options);
+        done = await this.handleScanValue(result.originalValue);
+      }
+    } catch (err) {
+      // 用户取消扫码：静默返回。
+    } finally {
+      this.scanning = false;
+    }
+  }
+
+  /** 返回 true 表示扫码流程结束（成功/非本应用码）；false 表示多帧未集齐，继续扫码。 */
+  private async handleScanValue(value: string): Promise<boolean> {
+    const text: string = value.trim();
+    if (text === '') {
+      Feedback.toast(this.getUIContext(), '没有识别到内容，请重试');
+      return true;
+    }
+    const frame: ShareFrame | null = ShareCodec.frameOf(text);
+    if (frame === null) {
+      Feedback.toast(this.getUIContext(), '这不是呢喃课表的分享码');
+      return true;
+    }
+    if (!frame.isMulti) {
+      await this.importScannedCode(text);
+      return true;
+    }
+    this.scannedFrames.set(`${frame.group}:${frame.index}`, text);
+    const merged: string | null = ShareCodec.mergeFrames(this.scannedFrames);
+    if (merged === null) {
+      Feedback.toast(this.getUIContext(),
+        `已扫描 ${this.scannedFrames.size}/${frame.total} 帧，请继续扫描`);
+      return false;
+    }
+    this.scannedFrames.clear();
+    await this.importScannedCode(merged);
+    return true;
+  }
+
+  private async importScannedCode(raw: string): Promise<void> {
+    try {
+      const decoded: DecodedSharePayload = await ShareCodec.decode(raw);
+      const table: CourseTable = await CourseTableRepository.insert(
+        new CourseTable(decoded.tableName, decoded.tableData));
+      const courses: Course[] = ImportCourseCodec.toCourses(decoded.courses, table.id);
+      if (courses.length > 0) {
+        await CourseRepository.insertMany(courses);
+      }
+      await AppState.switchTable(table.id);
+      Feedback.toast(this.getUIContext(), `已导入「${decoded.tableName}」，共 ${courses.length} 门课程`);
+      await this.load();
+    } catch (err) {
+      const message: string = err instanceof Error ? err.message : '未知错误';
+      Feedback.toast(this.getUIContext(), `扫码导入失败：${this.describeError(message)}`);
+    }
+  }
+
+  private describeError(code: string): string {
+    if (code === ShareCodeError.ChecksumMismatch) {
+      return '分享码校验失败，可能复制不完整';
+    }
+    if (code === ShareCodeError.Base64Failed || code === ShareCodeError.GzipFailed) {
+      return '分享码内容损坏，请重新复制完整内容';
+    }
+    if (code === ShareCodeError.UnsupportedVersion) {
+      return '分享码版本过新，请升级应用';
+    }
+    return '分享码解析失败';
+  }
+
+  private titleBarOptions(): HdsNavigationTitleBarOptions {
+    const menu: HdsNavigationMenuContentOptions = {
+      value: [{
+        content: {
+          icon: $r('sys.symbol.line_viewfinder'),
+          label: '扫码导入',
+          action: () => {
+            this.startScan();
+          }
+        }
+      }]
+    };
+    return hdsSubPageTitleBar('分享课表', '二维码 / 分享码与旧版南哪课表互通', menu);
+  }
 
   @Builder
   private qrCard() {
@@ -246,7 +351,7 @@ export struct SharePage {
       .height('100%')
       .backgroundColor(Colors.Background)
     }
-    .titleBar(hdsSubPageTitleBar('分享课表', '二维码 / 分享码与旧版南哪课表互通'))
+    .titleBar(this.titleBarOptions())
     .bindToScrollable([this.subScroller])
   }
 }
