@@ -4,7 +4,7 @@
  * 组织逻辑参考同类应用：顶部产品信息 → 项目链接 → 开源信息 → 本应用信息；
  * 「贡献指南/源代码/项目主页/问题反馈」等链接待开源仓库上线后填写（当前留空显示占位）。
  *
- * 不联网：所有链接只做复制到剪贴板，不拉起浏览器。
+ * 本页链接只做复制到剪贴板；隐私政策页始终展示 AGC 托管声明。
  */
 import { HdsNavDestination } from '@kit.UIDesignKit';
 import { Colors, FontSize, HdsMetrics, Radius, Spacing } from '../../common/design/Tokens';
@@ -23,7 +23,7 @@ const ROUTE_PRIVACY: string = 'privacy';
 const ROUTE_LICENSES: string = 'licenses';
 const ROUTE_ACKNOWLEDGEMENTS: string = 'acknowledgements';
 const DEVELOPER_UPSTREAM: string = 'idealclover';
-const DEVELOPER_REWRITE: string = 'JesseLee';
+const DEVELOPER_REWRITE: string = 'JesseLee-CN';
 
 /** GitHub 仓库链接。 */
 const REPO_URL: string = 'https://github.com/JesseLee-CN/njuschedule-hmos';
