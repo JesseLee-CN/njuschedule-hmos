@@ -4,17 +4,19 @@
 
 <h1>呢喃课表（NJU Schedule NEXT）</h1>
 
-**南京大学课程表 App「南哪课表」的 HarmonyOS / ArkTS 原生重写版**
+**南京大学课程表 App「南哪课表」的 HarmonyOS / ArkTS 版**
 
 </div>
 
-南京大学课程表 App「南哪课表」的 **HarmonyOS / ArkTS 原生重写版**，使用 ArkUI 声明式 UI 与状态管理 V2 实现。应用无账号体系、无自建服务器，课程与设置数据仅保存在本机。
+南京大学课程表 App「南哪课表」的 **HarmonyOS / ArkTS 版**，使用 ArkUI 声明式 UI 与状态管理 V2 实现。
 
 > 本应用不是南京大学官方应用，与学校及教务系统无隶属关系。上游 Flutter 项目：[idealclover/NJU-Class-Shedule-Flutter](https://github.com/idealclover/NJU-Class-Shedule-Flutter)（Apache-2.0）。
 >
 > **仓库**：https://github.com/JesseLee-CN/njuschedule-hmos
 >
 > **问题反馈**：https://github.com/JesseLee-CN/njuschedule-hmos/issues
+>
+> 正在招募有兴趣设计图标的同学，请联系JesseLee3923@outlook.com
 
 ## 界面预览
 
