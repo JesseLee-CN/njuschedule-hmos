@@ -42,6 +42,8 @@ export struct CoursesView {
   private groupsSource: ArrayDataSource<CourseGroup> = new ArrayDataSource<CourseGroup>();
   @Local loaded: boolean = false;
   @Local loadError: string = '';
+  /** 课程 Tab 是否激活：切回时重新读取配色池。 */
+  @Param active: boolean = true;
 
   aboutToAppear(): void {
     TabBarAutoHide.resetAndShow();
@@ -51,6 +53,13 @@ export struct CoursesView {
   @Monitor('store.dataRevision')
   onDataRevisionChanged(_monitor: IMonitor): void {
     this.reload();
+  }
+
+  @Monitor('active')
+  onActiveChanged(_monitor: IMonitor): void {
+    if (this.active) {
+      this.reload();
+    }
   }
 
   @Monitor('store.tableId')
@@ -325,7 +334,7 @@ export struct CoursesView {
               .padding({ left: Spacing.Lg, right: Spacing.Lg })
               .justifyContent(FlexAlign.Center)
             }
-          }, (group: CourseGroup) => group.name)
+          }, (group: CourseGroup) => `${group.name}-${group.color}`)
           ListItem() {
             Row()
               .width('100%')

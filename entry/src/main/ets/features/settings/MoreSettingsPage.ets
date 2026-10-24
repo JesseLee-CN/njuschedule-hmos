@@ -26,6 +26,7 @@ import { BackgroundImage } from '../../data/BackgroundImage';
 import { WidgetData } from '../../data/WidgetData';
 import { CourseRepository } from '../../data/CourseRepository';
 import { ColorPool } from '../../data/ColorPool';
+import { CourseColorPalette, CourseColorPalettes } from '../../data/CourseColorPalettes';
 import { CourseTable } from '../../data/models/Models';
 import { CourseTableRepository } from '../../data/CourseTableRepository';
 import { SettingsRow, SettingsRowDivider, SettingsSwitchRow } from './SettingsCommon';
@@ -53,6 +54,8 @@ export struct MoreSettingsPage {
 
   @Local tableName: string = '';
   @Local courseCount: number = 0;
+  /** 当前课程配色池 id。 */
+  @Local selectedPaletteId: string = CourseColorPalettes.DEFAULT_ID;
 
   private scroller: Scroller = new Scroller();
 
@@ -60,6 +63,7 @@ export struct MoreSettingsPage {
     this.selectedPreset = BackgroundImage.currentPreset();
     this.customHexInput = ThemeAccent.currentCustomHex();
     this.reloadTableInfo();
+    this.loadPaletteSelection();
   }
 
   @Monitor('store.backgroundImagePath')
@@ -88,6 +92,75 @@ export struct MoreSettingsPage {
     }
   }
 
+
+  private async loadPaletteSelection(): Promise<void> {
+    this.selectedPaletteId = await ColorPool.getPaletteId();
+  }
+
+  private async selectPalette(id: string): Promise<void> {
+    if (id === this.selectedPaletteId) {
+      return;
+    }
+    try {
+      await ColorPool.setPalette(id);
+      this.selectedPaletteId = id;
+      AppState.bumpDataRevision();
+      Feedback.toast(this.getUIContext(), `已切换配色池：${CourseColorPalettes.get(id).name}`);
+    } catch (err) {
+      console.error(`[MoreSettings] switch palette failed: ${JSON.stringify(err)}`);
+      Feedback.toast(this.getUIContext(), '切换配色池失败');
+    }
+  }
+
+  @Builder
+  private paletteCard(palette: CourseColorPalette) {
+    Column({ space: Spacing.Sm }) {
+      Row() {
+        ForEach(palette.colors.slice(0, 6), (color: string, index: number) => {
+          Row()
+            .layoutWeight(1)
+            .height(18)
+            .backgroundColor(color)
+        }, (color: string, index: number) => `${palette.id}-swatch-${index}`)
+      }
+      .width('100%')
+      .height(18)
+      .borderRadius(Radius.Sm)
+      .clip(true)
+
+      Row() {
+        Text(palette.name)
+          .fontSize(FontSize.Body)
+          .fontWeight(FontWeight.Medium)
+          .fontColor(Colors.TextPrimary)
+        Blank()
+        if (this.selectedPaletteId === palette.id) {
+          SymbolGlyph($r('sys.symbol.checkmark'))
+            .fontSize(14)
+            .fontColor([this.store.accentDisplay])
+        }
+      }
+      .width('100%')
+
+      Text(palette.subtitle)
+        .fontSize(FontSize.Caption)
+        .fontColor(Colors.TextTertiary)
+        .maxLines(1)
+        .width('100%')
+    }
+    .width('100%')
+    .padding(Spacing.Md)
+    .backgroundColor(Colors.Surface)
+    .borderRadius(Radius.Lg)
+    .border({
+      width: this.selectedPaletteId === palette.id ? 2 : 1,
+      color: this.selectedPaletteId === palette.id ? this.store.accentDisplay : Colors.OutlineLight
+    })
+    .alignItems(HorizontalAlign.Start)
+    .onClick(() => {
+      this.selectPalette(palette.id);
+    })
+  }
 
   private async resetCourseColors(): Promise<void> {
     try {
@@ -439,15 +512,47 @@ export struct MoreSettingsPage {
   private styleSection(): void {
     SectionHeader({ title: '课程样式', caption: '修改后立即生效，无需重启' })
     AppCard({ contentPadding: 0 }) {
-      SettingsRow({
-        icon: $r('sys.symbol.paintpalette'),
-        title: '重置课程颜色',
-        showArrow: false,
-        subtitle: '重新洗牌课程配色池，未自定义颜色的课程会重新分配颜色',
-        onTap: () => {
-          this.resetCourseColors();
+      Column() {
+        SettingsRow({
+          icon: $r('sys.symbol.paintpalette'),
+          title: '重置课程颜色',
+          showArrow: false,
+          subtitle: '在当前配色池中重新随机分配未自定义颜色的课程',
+          onTap: () => {
+            this.resetCourseColors();
+          }
+        })
+        SettingsRowDivider()
+        Column({ space: Spacing.Md }) {
+          Row() {
+            Text('课程配色池')
+              .fontSize(FontSize.Body)
+              .fontWeight(FontWeight.Medium)
+              .fontColor(Colors.TextPrimary)
+            Blank()
+            Text(CourseColorPalettes.get(this.selectedPaletteId).name)
+              .fontSize(FontSize.Caption)
+              .fontColor(Colors.TextTertiary)
+          }
+          .width('100%')
+
+          Grid() {
+            ForEach(CourseColorPalettes.LIST, (palette: CourseColorPalette) => {
+              GridItem() {
+                this.paletteCard(palette)
+              }
+            }, (palette: CourseColorPalette) => `palette-${palette.id}`)
+          }
+          .columnsTemplate('1fr 1fr')
+          .columnsGap(Spacing.Md)
+          .rowsGap(Spacing.Md)
+          .width('100%')
         }
-      })
+        .width('100%')
+        .padding(Spacing.Lg)
+        .alignItems(HorizontalAlign.Start)
+      }
+      .width('100%')
     }
   }
 

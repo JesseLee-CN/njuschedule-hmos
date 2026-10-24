@@ -58,6 +58,8 @@ export struct TimetableView {
   /** V2 全局 Store（主题色 / 背景图 / 课表与周次 / 显示配置）。 */
   @Local store: AppStore = AppStore.connect();
   @Param pageStack: NavPathStack = new NavPathStack();
+  /** 课表 Tab 是否处于激活状态：切回时重新读取配色池，保证重置颜色立即生效。 */
+  @Param active: boolean = true;
   /** 外壳可传入自己的 Scroller（用于标题栏模糊联动）；不传时用内置的。 */
   @Param scroller: Scroller = new Scroller();
   /** 外壳传入的 25 个周页面滚动控制器（用于标题栏模糊绑定）。 */
@@ -151,6 +153,13 @@ export struct TimetableView {
   @Monitor('store.dataRevision')
   onDataChanged(_monitor: IMonitor): void {
     this.reload();
+  }
+
+  @Monitor('active')
+  onActiveChanged(_monitor: IMonitor): void {
+    if (this.active) {
+      this.reload();
+    }
   }
 
   // ------------------------------------------------------------------ 数据
@@ -484,7 +493,7 @@ export struct TimetableView {
           }
         })
           .position({ x: block.x, y: block.y })
-      }, (block: LayoutBlock) => `w${week}-${this.daysCount()}-${this.store.classHeight}-${this.containerWidth}-${block.key}`)
+      }, (block: LayoutBlock) => `w${week}-${this.daysCount()}-${this.store.classHeight}-${this.containerWidth}-${block.key}-${block.color}`)
     }
     .width('100%')
     .height(this.gridHeight())

@@ -42,6 +42,10 @@ export class PrefKeys {
 
   // 课程配色池（lib/Utils/ColorUtil.dart）
   static readonly ColorPool: string = 'colorPool';
+  /** 重置配色时生成的随机种子，用于打散课程颜色的取模映射。 */
+  static readonly ColorPoolSeed: string = 'colorPoolSeed';
+  /** 当前选中的课程配色池 id。 */
+  static readonly ColorPalette: string = 'colorPalette';
 
   // 隐私政策同意版本（旧版 key 同名：privacyVersion）
   static readonly PrivacyVersion: string = 'privacyVersion';
@@ -158,5 +162,23 @@ export class AppPreferences {
 
   static async setColorPoolRaw(value: string): Promise<void> {
     await AppPreferences.put(PrefKeys.ColorPool, value);
+  }
+
+  static async getColorPoolSeed(): Promise<number> {
+    const raw: string = await AppPreferences.getString(PrefKeys.ColorPoolSeed, '0');
+    const parsed: number = parseInt(raw, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  static async setColorPoolSeed(value: number): Promise<void> {
+    await AppPreferences.put(PrefKeys.ColorPoolSeed, `${value}`);
+  }
+
+  static async getColorPalette(): Promise<string> {
+    return AppPreferences.getString(PrefKeys.ColorPalette, 'default');
+  }
+
+  static async setColorPalette(value: string): Promise<void> {
+    await AppPreferences.put(PrefKeys.ColorPalette, value);
   }
 }

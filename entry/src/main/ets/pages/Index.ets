@@ -420,6 +420,7 @@ struct Index {
             Column() {
               TimetableView({
                 pageStack: this.pageStack,
+                active: this.activeTabIndex === 0,
                 scroller: this.timetableScroller,
                 weekScrollers: this.weekScrollers,
                 onActiveScrollerChange: (scroller: Scroller) => {
@@ -436,7 +437,7 @@ struct Index {
 
           TabContent() {
             Column() {
-              CoursesView({ pageStack: this.pageStack, tableId: this.store.tableId, scroller: this.coursesScroller })
+              CoursesView({ pageStack: this.pageStack, active: this.activeTabIndex === 1, tableId: this.store.tableId, scroller: this.coursesScroller })
             }
             .width('100%')
             .height('100%')
