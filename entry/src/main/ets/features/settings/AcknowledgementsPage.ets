@@ -38,7 +38,7 @@ export struct AcknowledgementsPage {
       SettingsRow({
         icon: $r('sys.symbol.person_2'),
         title: '贡献者',
-        subtitle: LINK_CONTRIBUTORS === '' ? 'GitHub 贡献者页面（开源仓库上线后补充）' : LINK_CONTRIBUTORS,
+        subtitle: '欢迎贡献！',
         trailingText: LINK_CONTRIBUTORS === '' ? '待补充' : '打开链接',
         showArrow: false,
         onTap: () => {

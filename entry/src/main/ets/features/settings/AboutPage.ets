@@ -72,16 +72,12 @@ export struct AboutPage {
   private appHeader(): void {
     AppCard() {
       Column({ space: Spacing.Sm }) {
-        Row() {
-          SymbolGlyph($r('sys.symbol.calendar'))
-            .fontSize(34)
-            .fontColor([this.store.accentDisplay])
-        }
-        .width(72)
-        .height(72)
-        .borderRadius(Radius.Xl)
-        .backgroundColor(this.store.accentSoft)
-        .justifyContent(FlexAlign.Center)
+        // 使用应用实际图标（与桌面图标一致）
+        Image($r('app.media.startIcon'))
+          .width(72)
+          .height(72)
+          .borderRadius(Radius.Xl)
+          .objectFit(ImageFit.Cover)
 
         // 应用名取模块字符串资源（EntryAbility_label 与 AppScope 的 app_name 同为「呢喃课表」；
         // AppScope 资源不在 check arkts 的资源校验范围内，这里用模块内可见的等价文案）。
@@ -94,12 +90,12 @@ export struct AboutPage {
           .fontSize(FontSize.BodySm)
           .fontColor(Colors.TextTertiary)
 
-        Text('南京大学课程表 · HarmonyOS 原生重写')
+        Text('不止南京大学的课程表 · HarmonyOS / ArkUI')
           .fontSize(FontSize.Caption)
           .fontColor(Colors.TextTertiary)
           .textAlign(TextAlign.Center)
 
-        Text(`重写：${DEVELOPER_REWRITE} · 上游 Flutter 项目作者：${DEVELOPER_UPSTREAM}`)
+        Text(`本项目作者：${DEVELOPER_REWRITE} · 上游 Flutter 项目作者：${DEVELOPER_UPSTREAM}`)
           .fontSize(FontSize.Caption)
           .fontColor(Colors.TextTertiary)
           .textAlign(TextAlign.Center)
@@ -170,7 +166,7 @@ export struct AboutPage {
       SettingsRow({
         icon: $r('sys.symbol.person'),
         title: '原项目开发者',
-        subtitle: '上游 Flutter 版作者',
+        subtitle: '上游 Flutter 版',
         trailingText: DEVELOPER_UPSTREAM,
         onTap: () => {
           openUrl(this.getUIContext(), `https://github.com/${DEVELOPER_UPSTREAM}`);
@@ -179,8 +175,8 @@ export struct AboutPage {
       SettingsRowDivider()
       SettingsRow({
         icon: $r('sys.symbol.pencil_line'),
-        title: '重写开发者',
-        subtitle: 'HarmonyOS / ArkUI 原生版',
+        title: '本项目开发者',
+        subtitle: 'HarmonyOS / ArkUI 版',
         trailingText: DEVELOPER_REWRITE,
         onTap: () => {
           openUrl(this.getUIContext(), `https://github.com/${DEVELOPER_REWRITE}`);

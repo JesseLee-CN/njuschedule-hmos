@@ -54,8 +54,10 @@ export struct SettingsView {
   @Local tableName: string = '';
   /** 当前课表课程数（危险操作说明用）。 */
   @Local courseCount: number = 0;
-  /** 周数拖动条气泡当前显示的周数（拖动过程中实时更新，显示为「第 N 周」而不是百分比）。 */
+  /** 「直接设置」行实时显示的周数（不是气泡，保留）。 */
   @Local weekSliderTip: number = 1;
+  /** 设置页滚动中：滚动时临时关闭 Slider 点击跳变，避免下滑时误触（官方 FAQ faqs-arkui-1107）。 */
+  @Local pageScrolling: boolean = false;
 
   aboutToAppear(): void {
     TabBarAutoHide.resetAndShow();
@@ -209,7 +211,7 @@ export struct SettingsView {
 
         Column({ space: Spacing.Xs }) {
           Row() {
-            Text('直接设置')
+            Text('滑动设置')
               .fontSize(FontSize.BodySm)
               .fontColor(Colors.TextSecondary)
             Blank()
@@ -231,6 +233,9 @@ export struct SettingsView {
             .trackColor(Colors.SurfaceHigh)
             .blockColor(Colors.Surface)
             .showTips(false)
+            // 滚动中只允许滑动、不允许点击跳变，避免上下滑页面时误触
+            .sliderInteractionMode(this.pageScrolling ? SliderInteraction.SLIDE_ONLY :
+              SliderInteraction.SLIDE_AND_CLICK_UP)
             .onChange((value: number, mode: SliderChangeMode) => {
               const week: number = Math.round(value);
               this.weekSliderTip = week;
@@ -289,6 +294,7 @@ export struct SettingsView {
         SettingsRowDivider()
 
         ClassHeightControl({
+          pageScrolling: this.pageScrolling,
           onCommit: (height: number): void => {
             this.persistClassHeight(height);
           }
@@ -314,7 +320,7 @@ export struct SettingsView {
         icon: $r('sys.symbol.share'),
         title: '分享当前课表',
         showArrow: false,
-        subtitle: '生成二维码或分享码，可导入到旧版 / 其他设备',
+        subtitle: '生成二维码或分享码，可导入到 Flutter 版 / 其他设备',
         onTap: () => {
           this.pageStack.pushPathByName('share', null);
         }
@@ -433,6 +439,12 @@ export struct SettingsView {
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
       // 下滑收起悬浮页签、上滑恢复；回到顶部一定恢复
+      .onScrollStart(() => {
+        this.pageScrolling = true;
+      })
+      .onScrollStop(() => {
+        this.pageScrolling = false;
+      })
       .onDidScroll((xOffset: number, yOffset: number) => {
         TabBarAutoHide.onScroll(this.scroller);
       })
@@ -456,6 +468,8 @@ export struct SettingsView {
 struct ClassHeightControl {
   @Local store: AppStore = AppStore.connect();
   @Local draft: number = TimetableMetrics.DefaultClassHeight;
+  /** 父页面滚动中：滚动时关闭 Slider 点击跳变，避免误触。 */
+  @Param pageScrolling: boolean = false;
   @Event onCommit: (height: number) => void = () => {
   };
 
@@ -502,7 +516,10 @@ struct ClassHeightControl {
         .width('100%')
         .trackColor(Colors.SurfaceHigh)
         .blockColor(Colors.Surface)
-        .showTips(true)
+        .showTips(false)
+        // 滚动中只允许滑动、不允许点击跳变，避免上下滑页面时误触
+        .sliderInteractionMode(this.pageScrolling ? SliderInteraction.SLIDE_ONLY :
+          SliderInteraction.SLIDE_AND_CLICK_UP)
         .onChange((value: number, mode: SliderChangeMode) => {
           const height: number = Math.round(value);
           if (height !== this.draft) {
