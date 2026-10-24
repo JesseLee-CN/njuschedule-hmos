@@ -545,7 +545,8 @@ export struct TimetableView {
   private multiSheetContent() {
     MultiSheetContent({
       group: this.multiGroup, pool: this.pool,
-      onSelect: (course: Course) => { this.openDetail(course); }
+      onSelect: (course: Course) => { this.openDetail(course); },
+      onClose: () => { this.multiShown = false; }
     })
   }
 
@@ -555,7 +556,7 @@ export struct TimetableView {
       courses: this.freeCourses, sheetIndex: this.freeSheetIndex, pool: this.pool,
       onClose: () => { this.freeCourseSheetShown = false; },
       onIndexChange: (index: number) => { this.freeSheetIndex = index; },
-      onOpenCourse: (course: Course) => { this.freeCourseSheetShown = false; this.openDetail(course); }
+      onOpenCourse: (course: Course) => { this.openDetail(course); }
     })
   }
 

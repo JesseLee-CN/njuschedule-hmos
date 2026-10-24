@@ -1,45 +1,190 @@
 /**
  * 课表周视图的四个半模态内容（TimetableView 的 bindSheet 内容）。
  *
- * 从 TimetableView.ets 拆分而来：bindSheet 开关、数据准备、跳转/删除/切换课表等父组件逻辑
- * 仍留在 TimetableView；内容组件只通过 @Param 接收数据、@Event 回传操作，行为/布局/样式/文案不变。
+ * 四个半模态统一使用 HdsSheetFrame：HDS 半模态标题栏（HdsNavigation +
+ * HdsNavDestination MODAL）+ 统一 Scroll/edge effect；内容只负责卡片与操作。
  * - DetailSheetContent：课程详情（编辑 / 删除入口）；
  * - MultiSheetContent：同一时段多门课程列表（点选打开详情）；
  * - FreeCourseSheetContent：自由时间课程列表（左右滑动分页，点卡片打开详情）；
- * - WeekPickerSheetContent：切换课表 + 课程周数（对齐系统日历「切换课表」样式）。
- *
- * 原来直接从父组件读的全局 Store（主题色高亮、半模态开关）改为：主题色用组件内
- * @Local store 直接连接（与拆分前一致），开关由父组件通过 @Event 收口。
+ * - WeekPickerSheetContent：切换课表 + 课程周数。
  */
 import { AppStore } from '../../app/AppStore';
+import { hdsSubPageTitleBar } from '../../common/ui/HdsSubPage';
+import {
+  ActionBarButton,
+  HdsActionBar,
+  HdsNavDestination,
+  HdsNavDestinationTitleMode,
+  HdsNavigation,
+  HdsNavigationAttribute,
+  HdsNavigationMenuContentOptions,
+  HdsNavigationTitleBarOptions,
+  IconStyleMode
+} from '@kit.UIDesignKit';
+import { ColorMetrics } from '@kit.ArkUI';
 import { ClassPeriod, LegacyConfig } from '../../common/Constants';
 import { Colors, FontSize, Radius, Spacing } from '../../common/design/Tokens';
 import { ColorPool } from '../../data/ColorPool';
 import { Course, CourseTable } from '../../data/models/Models';
 import { WeeksFormat } from './WeeksFormat';
 
-/** 课程详情半模态内容（对齐系统日历半模态样式）。 */
+/**
+ * 半模态统一外壳：HDS 标题栏（左关闭 / 标题 / 右菜单）+ 统一滚动与 edge effect。
+ * 内容通过尾随闭包传入，避免每个半模态各自复制一套导航/标题栏代码。
+ */
 @ComponentV2
-export struct DetailSheetContent {
-  /** V2 全局 Store（主题色：编辑入口文字）。 */
-  @Local store: AppStore = AppStore.connect();
-  /** 要展示的课程。 */
-  @Param course: Course = new Course();
-  /** 当前课表作息（拼「时间」行的具体起止时间）。 */
-  @Param periods: ClassPeriod[] = [];
-  /** 课程配色池（课程图标颜色）。 */
-  @Param pool: number[] = [];
-  /** 关闭半模态（父组件负责收起 bindSheet）。 */
+export struct HdsSheetFrame {
+  @Param title: string = '';
+  @Param subtitle: string = '';
+  /** true：占满 sheet（切换课表 LARGE）；false：按内容高度（FIT_CONTENT）。 */
+  @Param fillHeight: boolean = false;
+  /** 可选的 HDS 标题栏右侧菜单。 */
+  @Param menu: HdsNavigationMenuContentOptions | undefined = undefined;
   @Event onClose: () => void = () => {
   };
-  /** 进入课程编辑页（父组件负责收 sheet + 路由跳转）。 */
+  @BuilderParam content: () => void = this.emptyContent;
+
+  private sheetNav: NavPathStack = new NavPathStack();
+  private scroller: Scroller = new Scroller();
+
+  aboutToAppear(): void {
+    this.sheetNav.pushPath({ name: 'sheet-content' });
+  }
+
+  @Builder
+  private emptyContent() {
+    Column()
+  }
+
+  private titleBarOptions(): HdsNavigationTitleBarOptions {
+    const options: HdsNavigationTitleBarOptions = hdsSubPageTitleBar(this.title, this.subtitle);
+    options.enableComponentSafeArea = true;
+    options.avoidLayoutSafeArea = false;
+    options.content!.backIcon = {
+      icon: $r('sys.symbol.xmark'),
+      type: IconStyleMode.NORMAL,
+      action: () => {
+        this.onClose();
+      }
+    };
+    if (this.menu !== undefined) {
+      options.content!.menu = this.menu;
+    }
+    return options;
+  }
+
+  @Builder
+  private destination(name: string, param: Object) {
+    HdsNavDestination() {
+      Scroll(this.scroller) {
+        this.content()
+      }
+      .width('100%')
+      .align(Alignment.Top)
+      .scrollBar(BarState.Off)
+      .edgeEffect(EdgeEffect.Spring)
+      .clip(false)
+      .height(this.fillHeight ? '100%' : 'auto')
+    }
+    .titleBar(this.titleBarOptions())
+    .titleMode(HdsNavDestinationTitleMode.MODAL)
+    .bindToScrollable([this.scroller])
+    .width('100%')
+    .height(this.fillHeight ? '100%' : 'auto')
+  }
+
+  build() {
+    HdsNavigation(this.sheetNav) {
+      Column()
+    }
+    .navDestination(this.destination)
+    .hideNavBar(true)
+    .width('100%')
+    .height(this.fillHeight ? '100%' : 'auto')
+  }
+}
+
+/** 半模态里的课程卡片：同一时段多课程 / 自由时间课程共用，保证样式完全一致。 */
+@ComponentV2
+export struct CourseInfoCard {
+  @Param course: Course = new Course();
+  @Param pool: number[] = [];
+  @Event onOpen: (course: Course) => void = () => {
+  };
+
+  @Builder
+  private line(label: string, value: string) {
+    Row({ space: 2 }) {
+      Text(`${label}：`)
+        .fontSize(FontSize.Body)
+        .fontColor(Colors.TextTertiary)
+      Text(value === '' ? '—' : value)
+        .fontSize(FontSize.Body)
+        .fontColor(Colors.TextSecondary)
+        .layoutWeight(1)
+    }
+    .width('100%')
+    .alignItems(VerticalAlign.Top)
+  }
+
+  build() {
+    Column({ space: Spacing.Sm }) {
+      Row({ space: Spacing.Sm }) {
+        Row()
+          .width(10)
+          .height(10)
+          .borderRadius(Radius.Round)
+          .backgroundColor(ColorPool.resolve(this.course, this.pool))
+        Text(this.course.name)
+          .fontSize(FontSize.Title)
+          .fontWeight(FontWeight.Bold)
+          .fontColor(Colors.TextPrimary)
+          .maxLines(2)
+          .layoutWeight(1)
+      }
+      .width('100%')
+      .alignItems(VerticalAlign.Center)
+
+      this.line('时间', `${WeeksFormat.weekdayLabel(this.course.weekTime)} ${WeeksFormat.periodLabel(this.course)}`)
+      this.line('周次', WeeksFormat.describe(this.course.weeks))
+      if (this.course.classroom !== '') {
+        this.line('地点', this.course.classroom)
+      }
+      if (this.course.teacher !== '') {
+        this.line('教师', this.course.teacher)
+      }
+
+      Text('点击卡片查看课程详情或编辑/删除')
+        .fontSize(FontSize.Caption)
+        .fontColor(Colors.TextTertiary)
+        .margin({ top: Spacing.Sm })
+    }
+    .width('100%')
+    .padding(Spacing.Lg)
+    .backgroundColor(Colors.Surface)
+    .borderRadius(Radius.Lg)
+    .border({ width: 1, color: Colors.OutlineLight })
+    .alignItems(HorizontalAlign.Start)
+    .onClick(() => {
+      this.onOpen(this.course);
+    })
+  }
+}
+
+/** 课程详情半模态内容。 */
+@ComponentV2
+export struct DetailSheetContent {
+  @Local store: AppStore = AppStore.connect();
+  @Param course: Course = new Course();
+  @Param periods: ClassPeriod[] = [];
+  @Param pool: number[] = [];
+  @Event onClose: () => void = () => {
+  };
   @Event onEdit: (course: Course) => void = () => {
   };
-  /** 删除课程（父组件负责二次确认、删库与刷新）。 */
   @Event onDelete: (course: Course) => void = () => {
   };
 
-  /** 课程详情里的「标签：内容」行（内联样式，对齐系统日历）。 */
   @Builder
   private detailTextLine(label: string, value: string) {
     Row({ space: 2 }) {
@@ -55,7 +200,6 @@ export struct DetailSheetContent {
     .alignItems(VerticalAlign.Top)
   }
 
-  /** 时间文案：周三 第 5 - 6 节(14:00-15:50)。 */
   private detailTimeText(): string {
     const course: Course = this.course;
     const weekday: string = WeeksFormat.weekdayLabel(course.weekTime);
@@ -72,31 +216,9 @@ export struct DetailSheetContent {
     return `${weekday} ${periods}`;
   }
 
-  build() {
+  @Builder
+  private detailBody() {
     Column({ space: Spacing.Lg }) {
-      // 标题栏：课程详情 + 关闭（对齐系统日历半模态样式）
-      Row() {
-        Text('课程详情')
-          .fontSize(FontSize.Headline)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Colors.TextPrimary)
-          .layoutWeight(1)
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.xmark'))
-            .fontSize(18)
-            .fontColor([Colors.TextPrimary])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Colors.SurfaceHigh)
-        .onClick(() => {
-          this.onClose();
-        })
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
-      // 课程信息卡：图标 + 课名 + 编辑
       Column({ space: Spacing.Sm }) {
         Row({ space: Spacing.Md }) {
           Row() {
@@ -117,16 +239,6 @@ export struct DetailSheetContent {
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .layoutWeight(1)
-
-          Text('编辑')
-            .fontSize(FontSize.BodySm)
-            .fontColor(this.store.accentDisplay)
-            .padding({ left: Spacing.Md, right: Spacing.Md, top: Spacing.Xs, bottom: Spacing.Xs })
-            .backgroundColor(Colors.SurfaceHigh)
-            .borderRadius(Radius.Round)
-            .onClick(() => {
-              this.onEdit(this.course);
-            })
         }
         .width('100%')
         .alignItems(VerticalAlign.Center)
@@ -154,156 +266,123 @@ export struct DetailSheetContent {
       .border({ width: 1, color: Colors.OutlineLight })
       .alignItems(HorizontalAlign.Start)
 
-      // 操作卡：删除课程
-      Column() {
-        Row({ space: Spacing.Sm }) {
-          SymbolGlyph($r('sys.symbol.trash'))
-            .fontSize(18)
-            .fontColor([Colors.Error])
-          Text('删除课程')
-            .fontSize(FontSize.Body)
-            .fontColor(Colors.Error)
-            .layoutWeight(1)
-        }
-        .width('100%')
-        .padding(Spacing.Lg)
-        .onClick(() => {
-          this.onDelete(this.course);
+      Row() {
+        HdsActionBar({
+          startButtons: [
+            new ActionBarButton({
+              baseIcon: $r('sys.symbol.trash'),
+              iconFillColor: ColorMetrics.resourceColor(Colors.Error),
+              accessibilityText: '删除课程',
+              onClick: () => {
+                this.onDelete(this.course);
+              }
+            })
+          ],
+          primaryButton: new ActionBarButton({
+            baseIcon: $r('sys.symbol.pencil_line'),
+            backgroundColor: ColorMetrics.resourceColor(this.store.accentDisplay),
+            iconFillColor: ColorMetrics.resourceColor(this.store.accentOn),
+            accessibilityText: '编辑课程',
+            onClick: () => {
+              this.onEdit(this.course);
+            }
+          }),
+          isExpand: true
         })
       }
       .width('100%')
-      .backgroundColor(Colors.Surface)
-      .borderRadius(Radius.Lg)
-      .border({ width: 1, color: Colors.OutlineLight })
+      .justifyContent(FlexAlign.Center)
     }
     .width('100%')
     .padding({ left: Spacing.Xl, right: Spacing.Xl, top: Spacing.Xl, bottom: Spacing.Xxl })
     .alignItems(HorizontalAlign.Start)
   }
-}
-
-/** 同一时段多门课程的半模态内容。 */
-@ComponentV2
-export struct MultiSheetContent {
-  /** 同一时段的课程组（冲突课程）。 */
-  @Param group: Course[] = [];
-  /** 课程配色池。 */
-  @Param pool: number[] = [];
-  /** 点选某门课程（父组件打开课程详情）。 */
-  @Event onSelect: (course: Course) => void = () => {
-  };
 
   build() {
-    Column({ space: Spacing.Sm }) {
-      Text('同一时段有多个课程')
-        .fontSize(FontSize.Title)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(Colors.TextPrimary)
-        .width('100%')
-        .margin({ bottom: Spacing.Sm })
-      ForEach(this.group, (course: Course) => {
-        Row({ space: Spacing.Sm }) {
-          Row()
-            .width(10)
-            .height(10)
-            .borderRadius(Radius.Round)
-            .backgroundColor(ColorPool.resolve(course, this.pool))
-          Column({ space: 2 }) {
-            Text(course.name)
-              .fontSize(FontSize.Body)
-              .fontColor(Colors.TextPrimary)
-              .maxLines(1)
-            Text(`${WeeksFormat.weekdayLabel(course.weekTime)} ${WeeksFormat.periodLabel(course)} · ${WeeksFormat.describe(course.weeks)}`)
-              .fontSize(FontSize.Caption)
-              .fontColor(Colors.TextTertiary)
-              .maxLines(1)
-          }
-          .alignItems(HorizontalAlign.Start)
-          .layoutWeight(1)
-          SymbolGlyph($r('sys.symbol.chevron_right'))
-            .fontSize(16)
-            .fontColor([Colors.TextTertiary])
-        }
-        .width('100%')
-        .padding(Spacing.Md)
-        .backgroundColor(Colors.SurfaceHigh)
-        .borderRadius(Radius.Md)
-        .onClick(() => {
-          this.onSelect(course);
-        })
-      }, (course: Course) => `multi-${course.id}`)
+    HdsSheetFrame({
+      title: '课程详情',
+      onClose: () => {
+        this.onClose();
+      }
+    }) {
+      this.detailBody()
     }
-    .width('100%')
-    .padding(Spacing.Xl)
-    .alignItems(HorizontalAlign.Start)
   }
 }
 
-/** 底部半模态：自由时间课程列表（迷你栏点击后打开，左右滑动分页查看）。 */
+/** 同一时段多门课程的半模态内容（卡片样式与自由时间课程一致）。 */
 @ComponentV2
-export struct FreeCourseSheetContent {
-  /** 本周自由时间课程。 */
-  @Param courses: Course[] = [];
-  /** 当前 Swiper 页下标（父组件持有，打开时重置为 0）。 */
-  @Param sheetIndex: number = 0;
-  /** 课程配色池。 */
+export struct MultiSheetContent {
+  @Param group: Course[] = [];
   @Param pool: number[] = [];
-  /** 关闭半模态（父组件负责收起 bindSheet）。 */
+  @Event onSelect: (course: Course) => void = () => {
+  };
   @Event onClose: () => void = () => {
   };
-  /** Swiper 翻页回调（父组件记录下标，用于「N / 总数」文案）。 */
+  @Local multiIndex: number = 0;
+
+  @Builder
+  private multiBody() {
+    Column({ space: Spacing.Lg }) {
+      Swiper() {
+        ForEach(this.group, (course: Course) => {
+          CourseInfoCard({
+            course: course,
+            pool: this.pool,
+            onOpen: (target: Course) => {
+              this.onSelect(target);
+            }
+          })
+        }, (course: Course) => `multi-${course.id}`)
+      }
+      .width('100%')
+      .height(240)
+      .indicator(false)
+      .loop(false)
+      .onChange((index: number) => {
+        this.multiIndex = index;
+      })
+
+      Text(`${this.multiIndex + 1} / ${this.group.length}`)
+        .fontSize(FontSize.Caption)
+        .fontColor(Colors.TextTertiary)
+        .width('100%')
+        .textAlign(TextAlign.Center)
+    }
+    .width('100%')
+    .padding({ left: Spacing.Xl, right: Spacing.Xl, top: Spacing.Xl, bottom: Spacing.Xxl })
+    .alignItems(HorizontalAlign.Start)
+  }
+
+  build() {
+    HdsSheetFrame({
+      title: '同一时段有多个课程',
+      subtitle: `共 ${this.group.length} 门 · 左右滑动查看`,
+      onClose: () => {
+        this.onClose();
+      }
+    }) {
+      this.multiBody()
+    }
+  }
+}
+
+/** 自由时间课程列表半模态内容（左右滑动分页，点卡片打开详情）。 */
+@ComponentV2
+export struct FreeCourseSheetContent {
+  @Param courses: Course[] = [];
+  @Param sheetIndex: number = 0;
+  @Param pool: number[] = [];
+  @Event onClose: () => void = () => {
+  };
   @Event onIndexChange: (index: number) => void = () => {
   };
-  /** 点卡片打开课程详情（父组件先收起本 sheet，再开详情半模态）。 */
   @Event onOpenCourse: (course: Course) => void = () => {
   };
 
-  /** 课程详情里的「标签：内容」行（内联样式，对齐系统日历）。 */
   @Builder
-  private detailTextLine(label: string, value: string) {
-    Row({ space: 2 }) {
-      Text(`${label}：`)
-        .fontSize(FontSize.Body)
-        .fontColor(Colors.TextTertiary)
-      Text(value === '' ? '—' : value)
-        .fontSize(FontSize.Body)
-        .fontColor(Colors.TextSecondary)
-        .layoutWeight(1)
-    }
-    .width('100%')
-    .alignItems(VerticalAlign.Top)
-  }
-
-  build() {
+  private freeBody() {
     Column({ space: Spacing.Lg }) {
-      Row() {
-        Column({ space: 2 }) {
-          Text('自由时间课程')
-            .fontSize(FontSize.Headline)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Colors.TextPrimary)
-          Text(`共 ${this.courses.length} 门 · 左右滑动查看`)
-            .fontSize(FontSize.Caption)
-            .fontColor(Colors.TextTertiary)
-        }
-        .alignItems(HorizontalAlign.Start)
-        .layoutWeight(1)
-
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.xmark'))
-            .fontSize(18)
-            .fontColor([Colors.TextPrimary])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Colors.SurfaceHigh)
-        .onClick(() => {
-          this.onClose();
-        })
-      }
-      .width('100%')
-      .alignItems(VerticalAlign.Center)
-
       if (this.courses.length === 0) {
         Text('本周没有自由时间课程')
           .fontSize(FontSize.Body)
@@ -314,46 +393,12 @@ export struct FreeCourseSheetContent {
       } else {
         Swiper() {
           ForEach(this.courses, (course: Course) => {
-            Column({ space: Spacing.Sm }) {
-              Row({ space: Spacing.Sm }) {
-                Row()
-                  .width(10)
-                  .height(10)
-                  .borderRadius(Radius.Round)
-                  .backgroundColor(ColorPool.resolve(course, this.pool))
-                Text(course.name)
-                  .fontSize(FontSize.Title)
-                  .fontWeight(FontWeight.Bold)
-                  .fontColor(Colors.TextPrimary)
-                  .maxLines(2)
-                  .layoutWeight(1)
+            CourseInfoCard({
+              course: course,
+              pool: this.pool,
+              onOpen: (target: Course) => {
+                this.onOpenCourse(target);
               }
-              .width('100%')
-              .alignItems(VerticalAlign.Center)
-
-              this.detailTextLine('时间', `${WeeksFormat.weekdayLabel(course.weekTime)} ${WeeksFormat.periodLabel(course)}`)
-              this.detailTextLine('周次', WeeksFormat.describe(course.weeks))
-              if (course.classroom !== '') {
-                this.detailTextLine('地点', course.classroom)
-              }
-              if (course.teacher !== '') {
-                this.detailTextLine('教师', course.teacher)
-              }
-
-              Text('点击卡片查看课程详情或编辑/删除')
-                .fontSize(FontSize.Caption)
-                .fontColor(Colors.TextTertiary)
-                .margin({ top: Spacing.Sm })
-            }
-            .width('100%')
-            .padding(Spacing.Lg)
-            .backgroundColor(Colors.Surface)
-            .borderRadius(Radius.Lg)
-            .border({ width: 1, color: Colors.OutlineLight })
-            .alignItems(HorizontalAlign.Start)
-            .onClick(() => {
-              // 复用课表网格的课程详情半模态（编辑/删除等操作与原有课程完全一致）
-              this.onOpenCourse(course);
             })
           }, (course: Course) => `free-sheet-${course.id}`)
         }
@@ -376,32 +421,35 @@ export struct FreeCourseSheetContent {
     .padding({ left: Spacing.Xl, right: Spacing.Xl, top: Spacing.Xl, bottom: Spacing.Xxl })
     .alignItems(HorizontalAlign.Start)
   }
+
+  build() {
+    HdsSheetFrame({
+      title: '自由时间课程',
+      subtitle: `共 ${this.courses.length} 门 · 左右滑动查看`,
+      onClose: () => {
+        this.onClose();
+      }
+    }) {
+      this.freeBody()
+    }
+  }
 }
 
-/** 底部半模态：切换课表 + 课程周数（对齐系统日历「切换课表」样式）。 */
+/** 底部半模态：切换课表 + 课程周数（HDS 半模态标题栏）。 */
 @ComponentV2
 export struct WeekPickerSheetContent {
-  /** V2 全局 Store（主题色：选中的课表 / 周次高亮）。 */
   @Local store: AppStore = AppStore.connect();
-  /** 全部课表（学期）。 */
   @Param tables: CourseTable[] = [];
-  /** 当前选中的课表 id（父组件持有，确认后应用）。 */
   @Param selectedTableId: number = 0;
-  /** 当前选中的周次（父组件持有，确认后应用）。 */
   @Param selectedWeek: number = 1;
-  /** 关闭半模态（父组件负责收起 bindSheet）。 */
   @Event onClose: () => void = () => {
   };
-  /** 点选课表 chip（父组件更新选中 id）。 */
   @Event onSelectTable: (tableId: number) => void = () => {
   };
-  /** 点选周次（父组件更新选中周次）。 */
   @Event onSelectWeek: (week: number) => void = () => {
   };
-  /** 点「+」新建课表（父组件收起 sheet 并跳转课表管理页）。 */
   @Event onOpenTables: () => void = () => {
   };
-  /** 点「✓」确认切换（父组件应用选中课表与周次）。 */
   @Event onConfirm: () => void = () => {
   };
 
@@ -413,119 +461,97 @@ export struct WeekPickerSheetContent {
     return options;
   }
 
-  build() {
-    Column() {
-      // 标题栏：关闭 / 标题 / 新建 / 确定（半模态 Sheet 自绘标题栏）
-      Row({ space: Spacing.Md }) {
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.xmark'))
-            .fontSize(18)
-            .fontColor([Colors.TextPrimary])
+  private menuOptions(): HdsNavigationMenuContentOptions {
+    return {
+      value: [
+        {
+          content: {
+            icon: $r('sys.symbol.plus'),
+            type: IconStyleMode.NORMAL,
+            action: () => {
+              this.onOpenTables();
+            }
+          }
+        },
+        {
+          content: {
+            icon: $r('sys.symbol.checkmark'),
+            type: IconStyleMode.NORMAL,
+            action: () => {
+              this.onConfirm();
+            }
+          }
         }
-        .width(40)
-        .height(40)
-        .backgroundColor(Colors.SurfaceHigh)
-        .onClick(() => {
-          this.onClose();
-        })
+      ]
+    };
+  }
 
-        Text('切换课表')
-          .fontSize(FontSize.Headline)
-          .fontWeight(FontWeight.Bold)
-          .fontColor(Colors.TextPrimary)
-          .layoutWeight(1)
-
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.plus'))
-            .fontSize(20)
-            .fontColor([Colors.TextPrimary])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Colors.SurfaceHigh)
-        .onClick(() => {
-          this.onOpenTables();
-        })
-
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.checkmark'))
-            .fontSize(20)
-            .fontColor([Colors.TextPrimary])
-        }
-        .width(40)
-        .height(40)
-        .backgroundColor(Colors.SurfaceHigh)
-        .onClick(() => {
-          this.onConfirm();
-        })
+  @Builder
+  private pickerBody() {
+    Column({ space: Spacing.Lg }) {
+      Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
+        ForEach(this.tables, (table: CourseTable) => {
+          Text(table.name)
+            .fontSize(FontSize.BodySm)
+            .fontColor(table.id === this.selectedTableId ?
+              this.store.accentOn : Colors.TextSecondary)
+            .padding({ left: Spacing.Lg, right: Spacing.Lg, top: Spacing.Sm, bottom: Spacing.Sm })
+            .backgroundColor(table.id === this.selectedTableId ?
+              this.store.accentDisplay : Colors.SurfaceHigh)
+            .borderRadius(Radius.Round)
+            .margin({ right: Spacing.Sm, bottom: Spacing.Sm })
+            .onClick(() => {
+              this.onSelectTable(table.id);
+            })
+        }, (table: CourseTable) => `sheet-table-${table.id}`)
       }
       .width('100%')
-      .alignItems(VerticalAlign.Center)
-      .padding({ left: Spacing.Xl, right: Spacing.Xl, top: Spacing.Xl, bottom: Spacing.Lg })
 
-      Scroll() {
-        Column({ space: Spacing.Lg }) {
-          // 课表（学期）选择 chips
-          Flex({ wrap: FlexWrap.Wrap, justifyContent: FlexAlign.Start }) {
-            ForEach(this.tables, (table: CourseTable) => {
-              Text(table.name)
-                .fontSize(FontSize.BodySm)
-                .fontColor(table.id === this.selectedTableId ?
-                  this.store.accentOn : Colors.TextSecondary)
-                .padding({ left: Spacing.Lg, right: Spacing.Lg, top: Spacing.Sm, bottom: Spacing.Sm })
-                .backgroundColor(table.id === this.selectedTableId ?
-                  this.store.accentDisplay : Colors.SurfaceHigh)
-                .borderRadius(Radius.Round)
-                .margin({ right: Spacing.Sm, bottom: Spacing.Sm })
-                .onClick(() => {
-                  this.onSelectTable(table.id);
-                })
-            }, (table: CourseTable) => `sheet-table-${table.id}`)
-          }
-          .width('100%')
-
-          Text('课程周数')
-            .fontSize(FontSize.Title)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Colors.TextPrimary)
-            .width('100%')
-
-          Grid() {
-            ForEach(this.weekOptions(), (value: number) => {
-              GridItem() {
-                Text(`${value}`)
-                  .fontSize(FontSize.Body)
-                  .fontColor(value === this.selectedWeek ?
-                    this.store.accentOn : Colors.TextPrimary)
-                  .width('100%')
-                  .height(44)
-                  .textAlign(TextAlign.Center)
-                  .backgroundColor(value === this.selectedWeek ?
-                    this.store.accentDisplay : Colors.SurfaceHigh)
-                  .borderRadius(Radius.Md)
-                  .onClick(() => {
-                    this.onSelectWeek(value);
-                  })
-              }
-            }, (value: number) => `sheet-week-${value}`)
-          }
-          .columnsTemplate('1fr 1fr 1fr 1fr 1fr')
-          .columnsGap(Spacing.Md)
-          .rowsGap(Spacing.Md)
-          .width('100%')
-          .height(5 * 44 + 4 * Spacing.Md)
-        }
+      Text('课程周数')
+        .fontSize(FontSize.Title)
+        .fontWeight(FontWeight.Bold)
+        .fontColor(Colors.TextPrimary)
         .width('100%')
-        .padding({ left: Spacing.Xl, right: Spacing.Xl, bottom: Spacing.Xxl })
+
+      Grid() {
+        ForEach(this.weekOptions(), (value: number) => {
+          GridItem() {
+            Text(`${value}`)
+              .fontSize(FontSize.Body)
+              .fontColor(value === this.selectedWeek ?
+                this.store.accentOn : Colors.TextPrimary)
+              .width('100%')
+              .height(44)
+              .textAlign(TextAlign.Center)
+              .backgroundColor(value === this.selectedWeek ?
+                this.store.accentDisplay : Colors.SurfaceHigh)
+              .borderRadius(Radius.Md)
+              .onClick(() => {
+                this.onSelectWeek(value);
+              })
+          }
+        }, (value: number) => `sheet-week-${value}`)
       }
+      .columnsTemplate('1fr 1fr 1fr 1fr 1fr')
+      .columnsGap(Spacing.Md)
+      .rowsGap(Spacing.Md)
       .width('100%')
-      .layoutWeight(1)
-      .align(Alignment.Top)
-      .scrollBar(BarState.Off)
-      .edgeEffect(EdgeEffect.Spring)
+      .height(5 * 44 + 4 * Spacing.Md)
     }
     .width('100%')
-    .height('100%')
-    .backgroundColor(Colors.Background)
+    .padding({ left: Spacing.Xl, right: Spacing.Xl, top: Spacing.Md, bottom: Spacing.Xxl })
+  }
+
+  build() {
+    HdsSheetFrame({
+      title: '切换课表',
+      fillHeight: true,
+      menu: this.menuOptions(),
+      onClose: () => {
+        this.onClose();
+      }
+    }) {
+      this.pickerBody()
+    }
   }
 }
