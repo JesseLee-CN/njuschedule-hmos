@@ -11,7 +11,7 @@
  */
 import { resolveNavStack } from '../../common/NavStackResolver';
 import { Feedback } from '../../common/ui/Feedback';
-import { HdsNavDestination } from '@kit.UIDesignKit';
+import { HdsNavDestination, HdsNavigationMenuContentOptions, HdsNavigationTitleBarOptions } from '@kit.UIDesignKit';
 import { Course } from '../../data/models/Models';
 import { CourseRepository } from '../../data/CourseRepository';
 import { ColorPool } from '../../data/ColorPool';
@@ -722,38 +722,17 @@ export struct CourseEditPage {
   }
 
   @Builder
-  saveBar() {
-    Column({ space: Spacing.Xs }) {
-      if (this.formError !== '') {
-        Text(this.formError)
-          .fontSize(FontSize.Caption)
-          .fontColor(Colors.Error)
-          .width('100%')
-      }
-      Button(this.saving ? '保存中…' : '保存')
-        .width('100%')
-        .height(44)
-        .fontSize(FontSize.Body)
-        .fontColor(this.store.accentOn)
-        .backgroundColor(this.store.accentDisplay)
-        .enabled(!this.saving)
-        .onClick(() => {
-          this.save();
-        })
-    }
-    .alignItems(HorizontalAlign.Start)
-    .width('100%')
-    .padding({ left: Spacing.Lg, right: Spacing.Lg, top: Spacing.Md, bottom: Spacing.Lg })
-    .backgroundColor(Colors.Background)
-    .border({ width: { top: 1 }, color: { top: Colors.OutlineLight } })
-  }
-
-  @Builder
   formBody() {
     Column() {
       Scroll(this.scroller) {
         Row() {
           Column({ space: Spacing.Lg }) {
+            if (this.formError !== '') {
+              Text(this.formError)
+                .fontSize(FontSize.Caption)
+                .fontColor(Colors.Error)
+                .width('100%')
+            }
             this.basicSection()
             this.timeSection()
             this.weekSection()
@@ -778,8 +757,6 @@ export struct CourseEditPage {
       .align(Alignment.Top)
       .scrollBar(BarState.Off)
       .edgeEffect(EdgeEffect.Spring)
-
-      this.saveBar()
     }
     .width('100%')
     .layoutWeight(1)
@@ -795,6 +772,22 @@ export struct CourseEditPage {
         this.navStack().pop();
       }
     })
+  }
+
+  private titleBarOptions(): HdsNavigationTitleBarOptions {
+    const menu: HdsNavigationMenuContentOptions = {
+      value: [{
+        content: {
+          icon: $r('sys.symbol.checkmark'),
+          label: '保存',
+          isEnabled: !this.saving,
+          action: () => {
+            this.save();
+          }
+        }
+      }]
+    };
+    return hdsSubPageTitleBar(this.isEditing() ? '编辑课程' : '添加课程', '', menu);
   }
 
   build() {
@@ -825,7 +818,7 @@ export struct CourseEditPage {
       .height('100%')
       .backgroundColor(Colors.Background)
     }
-    .titleBar(hdsSubPageTitleBar(this.isEditing() ? '编辑课程' : '添加课程'))
+    .titleBar(this.titleBarOptions())
     .bindToScrollable([this.scroller])
     .onReady((ctx: NavDestinationContext) => {
       this.stack = ctx.pathStack;

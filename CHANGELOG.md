@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-24
+
+发布版本：`versionName 0.1.2`，`versionCode 1000102`（语义版本编码：`1_000_000 + major*10000 + minor*100 + patch`，参考 Kazumi 的 `pubspec version+build` 方式）。
+
+
 ### 变更
 
 - 隐私政策升级至 v2.1（`PRIVACY_VERSION` 7 → 8）：补充分享页扫码导入的

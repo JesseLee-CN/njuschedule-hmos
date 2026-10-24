@@ -35,6 +35,23 @@ devecocli ui screenshot --device <serial> --path /tmp/shot.png
 
 真机安装需要签名。仓库**不携带签名材料**：`build-profile.json5` 的 `signingConfigs` 保持为空；本机签名配置放在 `external-signing-config.json`（已 gitignore，示例见 `external-signing-config.example.json`），由根 `hvigorfile.ts` 条件注入。**任何证书、keystore、口令、Profile 都不要提交。**
 
+## 2.1 版本与发布
+
+参考 Kazumi 的版本管理方式：**单一版本源 + 语义化版本 + 发布 tag**。
+
+- 版本唯一来源：`AppScope/app.json5` 的 `versionName` / `versionCode`；
+- `versionName` 使用语义化版本，如 `0.1.2`；
+- `versionCode` 由语义版本编码，保证单调递增：
+  `1_000_000 + major*10000 + minor*100 + patch`
+  （`0.1.2` → `1000102`；前导 `1_000_000` 为兼容已发布版本的基数）；
+- 发布流程：
+  1. 更新 `AppScope/app.json5`；
+  2. 更新 `CHANGELOG.md` 对应版本记录；
+  3. 提交并打 tag（如 `v0.1.2`）推送；
+  4. 用签名 HAP 构建 release。
+
+不要只改 `versionName` 不改 `versionCode`，否则 HarmonyOS 无法覆盖安装升级。
+
 ## 3. 目录结构
 
 ```
